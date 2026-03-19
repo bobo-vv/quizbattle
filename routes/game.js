@@ -1,6 +1,6 @@
 const express = require('express');
 const { pool } = require('../db/db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, getLimits } = require('../middleware/auth');
 
 const router = express.Router();
 const games = new Map();
@@ -48,6 +48,11 @@ router.post('/create', requireAuth, async (req, res) => {
 
     quiz.questions = questions;
 
+    // Get host's role for player limits
+    const hostResult = await pool.query('SELECT role FROM hosts WHERE id = $1', [req.session.hostId]);
+    const hostRole = hostResult.rows.length > 0 ? hostResult.rows[0].role : 'member';
+    const limits = getLimits(hostRole);
+
     const pin = generatePin();
 
     const game = {
@@ -59,6 +64,7 @@ router.post('/create', requireAuth, async (req, res) => {
       state: 'lobby',
       currentQuestion: -1,
       timer: null,
+      maxPlayers: limits.maxPlayers,
     };
 
     games.set(pin, game);

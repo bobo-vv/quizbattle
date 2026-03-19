@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - Admin Panel</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <header class="admin-topbar">
+    <a href="/dashboard.html" class="btn btn--outline btn--sm" data-i18n="common.back">&larr; กลับ</a>
+    <h1 class="admin-topbar__title" data-i18n="admin.title">จัดการสมาชิก</h1>
+  </header>
+
+  <main class="admin-container">
+    <!-- Stats Cards -->
+    <section class="admin-stats">
+      <div class="stat-card stat-card--purple">
+        <span class="stat-card__num" id="stat-total">0</span>
+        <span class="stat-card__label" data-i18n="admin.totalUsers">สมาชิกทั้งหมด</span>
+      </div>
+      <div class="stat-card stat-card--orange">
+        <span class="stat-card__num" id="stat-pending">0</span>
+        <span class="stat-card__label" data-i18n="admin.pendingCount">รออนุมัติ</span>
+      </div>
+      <div class="stat-card stat-card--blue">
+        <span class="stat-card__num" id="stat-quizzes">0</span>
+        <span class="stat-card__label" data-i18n="admin.totalQuizzes">Quiz ทั้งหมด</span>
+      </div>
+      <div class="stat-card stat-card--gold">
+        <span class="stat-card__num" id="stat-premium">0</span>
+        <span class="stat-card__label" data-i18n="admin.premiumCount">Premium</span>
+      </div>
+    </section>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab admin-tab--active" data-tab="pending">
+        <span data-i18n="admin.pendingTab">รออนุมัติ</span>
+        <span id="pending-badge" class="admin-tab__badge" hidden>0</span>
+      </button>
+      <button class="admin-tab" data-tab="all">
+        <span data-i18n="admin.allUsersTab">สมาชิกทั้งหมด</span>
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="admin-search">
+      <input type="text" id="search-input" class="admin-search__input"
+             placeholder="ค้นหา username หรือ email..." data-i18n-placeholder="admin.searchPlaceholder">
+    </div>
+
+    <!-- User Table -->
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th data-i18n="admin.colUsername">Username</th>
+            <th data-i18n="admin.colEmail">Email</th>
+            <th data-i18n="admin.colRole">Role</th>
+            <th data-i18n="admin.colStatus">Status</th>
+            <th data-i18n="admin.colQuizzes">Quiz</th>
+            <th data-i18n="admin.colLastLogin">Last Login</th>
+            <th data-i18n="admin.colActions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody">
+          <!-- Rendered by JS -->
+        </tbody>
+      </table>
+      <p id="no-users" class="admin-empty" hidden data-i18n="admin.noUsers">ไม่มีข้อมูล</p>
+    </div>
+  </main>
+
+  <!-- Reset Password Modal -->
+  <div id="reset-modal" class="modal" hidden>
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+      <h3 data-i18n="admin.newPasswordTitle">รหัสผ่านใหม่</h3>
+      <p id="reset-modal-user" class="modal__subtitle"></p>
+      <div class="modal__password-box">
+        <code id="reset-modal-password"></code>
+      </div>
+      <p class="modal__note" data-i18n="admin.copyPasswordNote">กรุณาคัดลอกรหัสผ่านนี้ให้ผู้ใช้ จะไม่แสดงอีก</p>
+      <button id="reset-modal-close" class="btn btn--primary" data-i18n="admin.close">ปิด</button>
+    </div>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

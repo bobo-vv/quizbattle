@@ -9,6 +9,12 @@
   var usernameEl   = document.getElementById('display-username');
   var logoutBtn    = document.getElementById('logout-btn');
   var template     = document.getElementById('quiz-card-template');
+  var roleBadgeEl  = document.getElementById('role-badge');
+  var adminLink    = document.getElementById('admin-link');
+  var adminBadge   = document.getElementById('admin-pending-badge');
+  var quizLimitEl  = document.getElementById('quiz-limit-display');
+  var welcomeBanner = document.getElementById('welcome-banner');
+  var welcomeClose  = document.getElementById('welcome-close');
 
   /* ---- auth guard ---- */
   function checkAuth() {
@@ -26,7 +32,7 @@
 
   /* ---- render quizzes ---- */
   function loadQuizzes() {
-    fetch('/api/quizzes')
+    return fetch('/api/quizzes')
       .then(function (res) { return res.json(); })
       .then(function (quizzes) {
         quizList.innerHTML = '';
@@ -90,9 +96,11 @@
 
         // Reapply translations on dynamically-created elements
         applyTranslations();
+        return quizzes.length;
       })
       .catch(function (err) {
         console.error('Failed to load quizzes:', err);
+        return 0;
       });
   }
 
@@ -105,6 +113,55 @@
     });
   }
 
+  /* ---- Show role badge ---- */
+  function showRoleBadge(role) {
+    if (!roleBadgeEl) return;
+    var r = role || 'member';
+    roleBadgeEl.className = 'role-badge role-badge--' + r;
+    roleBadgeEl.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+    roleBadgeEl.hidden = false;
+  }
+
+  /* ---- Show admin link + pending count ---- */
+  function setupAdmin() {
+    if (!adminLink) return;
+    adminLink.hidden = false;
+    fetch('/api/admin/stats')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (adminBadge && data.pending_count) {
+          adminBadge.textContent = data.pending_count;
+          adminBadge.hidden = false;
+        }
+      });
+  }
+
+  /* ---- Quiz limit display ---- */
+  function showQuizLimit(role, quizCount) {
+    if (!quizLimitEl) return;
+    if (role === 'admin' || role === 'premium') {
+      quizLimitEl.textContent = quizCount + ' Quiz (Unlimited)';
+    } else {
+      quizLimitEl.textContent = quizCount + '/5 Quiz';
+    }
+    quizLimitEl.hidden = false;
+  }
+
+  /* ---- Welcome banner ---- */
+  function checkWelcome(user) {
+    var key = 'quizbattle_welcomed_' + user.username;
+    if (localStorage.getItem(key)) return;
+    if (user.status === 'approved') {
+      if (welcomeBanner) welcomeBanner.hidden = false;
+      localStorage.setItem(key, '1');
+    }
+  }
+  if (welcomeClose) {
+    welcomeClose.addEventListener('click', function () {
+      if (welcomeBanner) welcomeBanner.hidden = true;
+    });
+  }
+
   /* ---- init ---- */
   checkAuth().then(function (user) {
     if (!user) return;
@@ -114,6 +171,13 @@
         ? 'สวัสดี, ' + user.username
         : 'Hello, ' + user.username;
     }
-    loadQuizzes();
+
+    showRoleBadge(user.role);
+    if (user.role === 'admin') setupAdmin();
+    checkWelcome(user);
+
+    loadQuizzes().then(function (count) {
+      showQuizLimit(user.role, count || 0);
+    });
   });
 })();

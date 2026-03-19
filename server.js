@@ -11,6 +11,7 @@ const { pool, initDB } = require('./db/db');
 const authRoutes = require('./routes/auth');
 const quizRoutes = require('./routes/quiz');
 const { router: gameRoutes } = require('./routes/game');
+const adminRoutes = require('./routes/admin');
 const gameHandler = require('./socket/gameHandler');
 
 const app = express();
@@ -52,6 +53,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/games', gameRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Share session with Socket.io
 io.engine.use(sessionMiddleware);

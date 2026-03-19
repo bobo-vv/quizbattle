@@ -32,3 +32,16 @@ CREATE TABLE IF NOT EXISTS options (
   is_correct BOOLEAN DEFAULT FALSE,
   sort_order INTEGER NOT NULL DEFAULT 0
 );
+
+-- User management columns (added for role system + admin approval)
+ALTER TABLE hosts ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE hosts ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'member';
+ALTER TABLE hosts ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+ALTER TABLE hosts ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
+ALTER TABLE hosts ADD COLUMN IF NOT EXISTS accepted_terms BOOLEAN DEFAULT FALSE;
+
+-- Set existing "Admin" account to admin role + approved
+UPDATE hosts SET role = 'admin', status = 'approved'
+  WHERE username = 'Admin' AND (role IS NULL OR role != 'admin');
+-- Backward compat: existing accounts without status get approved
+UPDATE hosts SET status = 'approved' WHERE status IS NULL;

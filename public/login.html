@@ -43,6 +43,11 @@
                  placeholder="ชื่อผู้ใช้" data-i18n-placeholder="auth.username">
         </div>
         <div class="form-group">
+          <label for="reg-email" data-i18n="auth.email">อีเมล</label>
+          <input type="email" id="reg-email" name="email" required autocomplete="email"
+                 placeholder="email@example.com" data-i18n-placeholder="auth.emailPlaceholder">
+        </div>
+        <div class="form-group">
           <label for="reg-password" data-i18n="auth.password">รหัสผ่าน</label>
           <input type="password" id="reg-password" name="password" required autocomplete="new-password"
                  placeholder="รหัสผ่าน" data-i18n-placeholder="auth.password">
@@ -51,6 +56,12 @@
           <label for="reg-confirm" data-i18n="auth.confirmPassword">ยืนยันรหัสผ่าน</label>
           <input type="password" id="reg-confirm" name="confirmPassword" required autocomplete="new-password"
                  placeholder="ยืนยันรหัสผ่าน" data-i18n-placeholder="auth.confirmPassword">
+        </div>
+        <div class="form-group form-group--checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" id="reg-terms" name="terms" required>
+            <span data-i18n="auth.acceptTerms">ยอมรับเงื่อนไขการใช้งาน</span>
+          </label>
         </div>
         <button type="submit" class="btn btn--primary btn--full" data-i18n="auth.registerBtn">สมัครสมาชิก</button>
       </form>

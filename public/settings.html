@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - ตั้งค่าบัญชี</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="settings-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <header class="settings-topbar">
+    <a href="/dashboard.html" class="btn btn--outline btn--sm" data-i18n="common.back">&larr; กลับ</a>
+    <h1 class="settings-topbar__title" data-i18n="settings.title">ตั้งค่าบัญชี</h1>
+  </header>
+
+  <main class="settings-container">
+    <!-- Profile Info -->
+    <section class="settings-card">
+      <h2 data-i18n="settings.profileInfo">ข้อมูลโปรไฟล์</h2>
+      <div class="settings-info">
+        <div class="settings-info__row">
+          <span class="settings-info__label" data-i18n="auth.username">ชื่อผู้ใช้</span>
+          <span id="info-username" class="settings-info__value">-</span>
+        </div>
+        <div class="settings-info__row">
+          <span class="settings-info__label" data-i18n="auth.email">อีเมล</span>
+          <span id="info-email" class="settings-info__value">-</span>
+        </div>
+        <div class="settings-info__row">
+          <span class="settings-info__label" data-i18n="settings.currentRole">Role</span>
+          <span id="info-role" class="settings-info__value"></span>
+        </div>
+        <div class="settings-info__row">
+          <span class="settings-info__label" data-i18n="settings.memberSince">สมาชิกตั้งแต่</span>
+          <span id="info-since" class="settings-info__value">-</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Change Email -->
+    <section class="settings-card">
+      <h2 data-i18n="settings.changeEmail">เปลี่ยนอีเมล</h2>
+      <form id="email-form" class="settings-form">
+        <div class="form-group">
+          <label for="new-email" data-i18n="settings.newEmail">อีเมลใหม่</label>
+          <input type="email" id="new-email" required placeholder="email@example.com">
+        </div>
+        <button type="submit" class="btn btn--primary btn--sm" data-i18n="settings.saveEmail">บันทึกอีเมล</button>
+        <span id="email-msg" class="settings-msg" hidden></span>
+      </form>
+    </section>
+
+    <!-- Change Password -->
+    <section class="settings-card">
+      <h2 data-i18n="settings.changePassword">เปลี่ยนรหัสผ่าน</h2>
+      <form id="password-form" class="settings-form">
+        <div class="form-group">
+          <label for="old-password" data-i18n="settings.oldPassword">รหัสผ่านเดิม</label>
+          <input type="password" id="old-password" required autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label for="new-password" data-i18n="settings.newPassword">รหัสผ่านใหม่</label>
+          <input type="password" id="new-password" required autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="confirm-password" data-i18n="settings.confirmNewPassword">ยืนยันรหัสผ่านใหม่</label>
+          <input type="password" id="confirm-password" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn--primary btn--sm" data-i18n="settings.savePassword">เปลี่ยนรหัสผ่าน</button>
+        <span id="password-msg" class="settings-msg" hidden></span>
+      </form>
+    </section>
+
+    <!-- Delete Account -->
+    <section class="settings-card settings-card--danger">
+      <h2 data-i18n="settings.dangerZone">Danger Zone</h2>
+      <p data-i18n="settings.deleteWarning">การลบบัญชีจะลบ Quiz ทั้งหมดของคุณด้วย ไม่สามารถกู้คืนได้</p>
+      <button id="delete-account-btn" class="btn btn--red btn--sm" data-i18n="settings.deleteAccount">ลบบัญชี</button>
+    </section>
+  </main>
+
+  <!-- Delete confirm modal -->
+  <div id="delete-modal" class="modal" hidden>
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+      <h3 data-i18n="settings.confirmDeleteTitle">ยืนยันลบบัญชี</h3>
+      <p data-i18n="settings.confirmDeleteMsg">กรุณาใส่รหัสผ่านเพื่อยืนยัน</p>
+      <div class="form-group">
+        <input type="password" id="delete-password" placeholder="รหัสผ่าน" data-i18n-placeholder="auth.password">
+      </div>
+      <div class="modal__actions">
+        <button id="delete-confirm" class="btn btn--red" data-i18n="settings.confirmDelete">ลบบัญชีถาวร</button>
+        <button id="delete-cancel" class="btn btn--outline" data-i18n="admin.close">ยกเลิก</button>
+      </div>
+      <span id="delete-msg" class="settings-msg" hidden></span>
+    </div>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/settings.js"></script>
+</body>
+</html>

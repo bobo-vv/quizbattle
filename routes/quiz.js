@@ -1,6 +1,6 @@
 const express = require('express');
 const { pool } = require('../db/db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, getLimits } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,6 +28,26 @@ router.post('/', async (req, res) => {
     const { title, description } = req.body;
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
+    }
+
+    // Check quiz limit based on role
+    const hostResult = await pool.query('SELECT role FROM hosts WHERE id = $1', [req.session.hostId]);
+    const role = hostResult.rows.length > 0 ? hostResult.rows[0].role : 'member';
+    const limits = getLimits(role);
+
+    if (limits.maxQuizzes !== Infinity) {
+      const countResult = await pool.query(
+        'SELECT COUNT(*)::int AS cnt FROM quizzes WHERE host_id = $1',
+        [req.session.hostId]
+      );
+      if (countResult.rows[0].cnt >= limits.maxQuizzes) {
+        return res.status(403).json({
+          error: 'Quiz limit reached',
+          limitReached: true,
+          maxQuizzes: limits.maxQuizzes,
+          currentCount: countResult.rows[0].cnt,
+        });
+      }
     }
 
     const result = await pool.query(

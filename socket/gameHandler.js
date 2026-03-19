@@ -50,6 +50,10 @@ function gameHandler(io) {
         if (game.state !== 'lobby') {
           return socket.emit('error', { message: 'Game has already started' });
         }
+        // Check player limit
+        if (game.maxPlayers && game.players.size >= game.maxPlayers) {
+          return socket.emit('error', { message: 'Game is full (max ' + game.maxPlayers + ' players)' });
+        }
         game.players.set(socket.id, {
           nickname,
           score: 0,

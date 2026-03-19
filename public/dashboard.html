@@ -16,13 +16,29 @@
     </div>
     <div class="top-nav__right">
       <span id="display-username" class="top-nav__user" data-i18n="dashboard.greeting">สวัสดี, Host</span>
+      <span id="role-badge" class="role-badge" hidden></span>
+      <a href="/settings.html" class="btn btn--outline btn--sm" title="Settings">&#9881;</a>
+      <a id="admin-link" href="/admin.html" class="btn btn--outline btn--sm" hidden>
+        <span data-i18n="admin.manageUsers">จัดการสมาชิก</span>
+        <span id="admin-pending-badge" class="admin-nav-badge" hidden>0</span>
+      </a>
       <button id="logout-btn" class="btn btn--outline btn--sm" data-i18n="dashboard.logout">ออกจากระบบ</button>
     </div>
   </nav>
 
+  <!-- Welcome banner (first login after approval) -->
+  <div id="welcome-banner" class="welcome-banner" hidden>
+    <span class="welcome-banner__icon">&#127881;</span>
+    <span id="welcome-text" class="welcome-banner__text" data-i18n="welcome.approvedMessage">ยินดีต้อนรับ! บัญชีของคุณได้รับการอนุมัติแล้ว</span>
+    <button id="welcome-close" class="welcome-banner__close">&times;</button>
+  </div>
+
   <main class="dashboard-container">
     <header class="dashboard-header">
-      <h1 data-i18n="dashboard.title">แดชบอร์ด</h1>
+      <div class="dashboard-header__left">
+        <h1 data-i18n="dashboard.title">แดชบอร์ด</h1>
+        <span id="quiz-limit-display" class="quiz-limit-badge" hidden></span>
+      </div>
       <a href="/create.html" class="btn btn--primary btn--lg" data-i18n="dashboard.createQuiz">+ สร้าง Quiz ใหม่</a>
     </header>
 
