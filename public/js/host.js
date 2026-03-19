@@ -101,6 +101,7 @@
     /* -- Host joined confirmation -- */
     socket.on('host-joined', function (data) {
       renderPlayers(data.players || []);
+      generateQR(pin);
       QuizSound.lobbyMusic();
     });
 
@@ -114,9 +115,43 @@
       renderPlayers(data.players || []);
     });
 
+    /* -- Countdown 3-2-1-GO! -- */
+    var countdownOverlay = document.getElementById('game-countdown-overlay');
+    var countdownNumEl   = document.getElementById('countdown-number');
+
+    socket.on('game-countdown', function () {
+      QuizSound.stopMusic();
+      if (countdownOverlay) countdownOverlay.hidden = false;
+      var count = 3;
+      if (countdownNumEl) countdownNumEl.textContent = count;
+      if (countdownNumEl) countdownNumEl.className = 'countdown-number countdown-number--pop';
+      QuizSound.countdownBeep && QuizSound.countdownBeep(count);
+
+      var cdInterval = setInterval(function () {
+        count--;
+        if (count > 0) {
+          if (countdownNumEl) {
+            countdownNumEl.textContent = count;
+            countdownNumEl.className = 'countdown-number countdown-number--pop';
+            void countdownNumEl.offsetWidth;
+            countdownNumEl.className = 'countdown-number countdown-number--pop';
+          }
+          QuizSound.countdownBeep && QuizSound.countdownBeep(count);
+        } else {
+          clearInterval(cdInterval);
+          if (countdownNumEl) {
+            countdownNumEl.textContent = 'GO!';
+            countdownNumEl.className = 'countdown-number countdown-number--go';
+          }
+          setTimeout(function () {
+            if (countdownOverlay) countdownOverlay.hidden = true;
+          }, 800);
+        }
+      }, 1000);
+    });
+
     /* -- Game events -- */
     socket.on('game-started', function () {
-      QuizSound.stopMusic();
       QuizSound.gameStart();
     });
 
@@ -189,6 +224,19 @@
       spawnConfetti();
     });
 
+    /* -- Reaction emoji floating -- */
+    var reactionContainer = document.getElementById('reaction-container');
+    socket.on('reaction', function (data) {
+      if (!reactionContainer) return;
+      var el = document.createElement('div');
+      el.className = 'reaction-float';
+      el.textContent = data.emoji;
+      el.style.left = (10 + Math.random() * 80) + '%';
+      el.style.animationDuration = (2 + Math.random()) + 's';
+      reactionContainer.appendChild(el);
+      setTimeout(function () { el.remove(); }, 3500);
+    });
+
     socket.on('error', function (data) {
       alert(data.message || data.error || 'Error');
     });
@@ -201,7 +249,7 @@
     (players || []).forEach(function (p) {
       var li = document.createElement('li');
       li.className = 'lobby__player-chip';
-      li.textContent = p.nickname;
+      li.innerHTML = (p.avatar ? '<span class="player-avatar">' + p.avatar + '</span>' : '') + escapeHtml(p.nickname);
       playerListEl.appendChild(li);
     });
     if (playerCountNum) playerCountNum.textContent = (players || []).length;
@@ -270,6 +318,7 @@
       li.style.animationDelay = (idx * 0.15) + 's';
       li.innerHTML =
         '<span class="leaderboard-item__rank">#' + entry.rank + '</span>' +
+        (entry.avatar ? '<span class="player-avatar">' + entry.avatar + '</span>' : '') +
         '<span class="leaderboard-item__name">' + escapeHtml(entry.nickname) + '</span>' +
         '<div class="leaderboard-item__bar-wrap">' +
           '<div class="leaderboard-item__bar" style="width:' + Math.max(10, (entry.score / Math.max(maxScore, 1)) * 100) + '%"></div>' +
@@ -291,6 +340,7 @@
       li.className = 'leaderboard-item';
       li.innerHTML =
         '<span class="leaderboard-item__rank">#' + entry.rank + '</span>' +
+        (entry.avatar ? '<span class="player-avatar">' + entry.avatar + '</span>' : '') +
         '<span class="leaderboard-item__name">' + escapeHtml(entry.nickname) + '</span>' +
         '<div class="leaderboard-item__bar-wrap">' +
           '<div class="leaderboard-item__bar" style="width:' + Math.max(10, (entry.score / Math.max(maxScore, 1)) * 100) + '%"></div>' +
@@ -310,7 +360,7 @@
       var avatarEl = document.getElementById('podium-' + place + '-avatar');
       if (nameEl) nameEl.textContent = entry ? entry.nickname : '-';
       if (scoreEl) scoreEl.textContent = entry ? entry.score : '0';
-      if (avatarEl) avatarEl.textContent = entry ? entry.nickname.charAt(0).toUpperCase() : '?';
+      if (avatarEl) avatarEl.textContent = entry ? (entry.avatar || entry.nickname.charAt(0).toUpperCase()) : '?';
     }
   }
 
@@ -329,6 +379,18 @@
       piece.style.animationDuration = (2 + Math.random() * 3) + 's';
       area.appendChild(piece);
     }
+  }
+
+  /* ---- generate QR code ---- */
+  function generateQR(pin) {
+    var qrContainer = document.getElementById('lobby-qr');
+    if (!qrContainer || typeof qrcode === 'undefined') return;
+    qrContainer.innerHTML = '';
+    var url = window.location.origin + '/join.html?pin=' + pin;
+    var qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    qrContainer.innerHTML = qr.createImgTag(4, 8);
   }
 
   /* ---- escape HTML ---- */

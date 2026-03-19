@@ -97,6 +97,7 @@ const translations = {
     'join.pinPlaceholder': '000000',
     'join.nicknameLabel': 'ชื่อเล่น',
     'join.nicknamePlaceholder': 'ใส่ชื่อเล่นของคุณ',
+    'join.chooseAvatar': 'เลือกตัวละคร',
     'join.joinBtn': 'เข้าร่วม!',
 
     /* Play */
@@ -284,6 +285,7 @@ const translations = {
     'join.pinPlaceholder': '000000',
     'join.nicknameLabel': 'Nickname',
     'join.nicknamePlaceholder': 'Enter your nickname',
+    'join.chooseAvatar': 'Choose your avatar',
     'join.joinBtn': 'Join!',
 
     /* Play */

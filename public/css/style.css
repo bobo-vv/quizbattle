@@ -2306,3 +2306,234 @@ button { cursor: pointer; border: none; background: none; }
   .admin-stats { grid-template-columns: 1fr; }
   .admin-table__actions { flex-direction: column; }
 }
+
+/* ============================================================
+   20. Avatar Picker (Join Page)
+   ============================================================ */
+.avatar-section {
+  margin-bottom: 1rem;
+}
+.avatar-section__label {
+  font-size: .9rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  opacity: .8;
+}
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  justify-content: center;
+  max-width: 340px;
+  margin: 0 auto;
+}
+.avatar-option {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: rgba(255,255,255,.1);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.avatar-option:hover {
+  transform: scale(1.15);
+  background: rgba(255,255,255,.2);
+}
+.avatar-option--selected {
+  border-color: #FFD700;
+  background: rgba(255,215,0,.2);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(255,215,0,.4);
+}
+
+/* Player avatar display (lobby, leaderboard, podium) */
+.player-avatar {
+  font-size: 1.3rem;
+  margin-right: .3rem;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   21. QR Code (Host Lobby)
+   ============================================================ */
+.lobby__qr {
+  margin-top: 1rem;
+  text-align: center;
+}
+.lobby__qr img {
+  border-radius: var(--radius-md);
+  background: var(--white);
+  padding: 8px;
+  box-shadow: var(--shadow-md);
+  max-width: 180px;
+}
+
+/* ============================================================
+   22. Countdown 3-2-1-GO! Overlay
+   ============================================================ */
+.game-countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(8px);
+}
+.countdown-number {
+  font-size: 8rem;
+  font-weight: 900;
+  color: var(--white);
+  text-shadow: 0 0 40px rgba(168,85,247,.6), 0 0 80px rgba(168,85,247,.3);
+  animation: countdownPop .4s ease;
+}
+.countdown-number--pop {
+  animation: countdownPop .4s ease;
+}
+.countdown-number--go {
+  color: #FFD700;
+  text-shadow: 0 0 40px rgba(255,215,0,.6), 0 0 80px rgba(255,215,0,.3);
+  animation: countdownPop .4s ease, pulse .6s ease;
+}
+
+@keyframes countdownPop {
+  0% { transform: scale(2.5); opacity: 0; }
+  50% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================================
+   23. Reaction Bar (Player) & Floating Emojis (Host)
+   ============================================================ */
+.reaction-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: .6rem;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(8px);
+  padding: .5rem .8rem;
+  border-radius: var(--radius-full);
+  z-index: 500;
+}
+.reaction-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.1);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s ease, background .15s ease;
+}
+.reaction-btn:hover {
+  transform: scale(1.2);
+  background: rgba(255,255,255,.2);
+}
+.reaction-btn:active {
+  transform: scale(0.9);
+}
+.reaction-btn--sent {
+  animation: reactionSent .3s ease;
+  background: rgba(255,215,0,.3);
+  border-color: #FFD700;
+}
+
+@keyframes reactionSent {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* Floating emojis on host screen */
+.reaction-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 400;
+  overflow: hidden;
+}
+.reaction-float {
+  position: absolute;
+  bottom: -40px;
+  font-size: 2.2rem;
+  animation: floatUp 3s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) scale(0.7);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   24. Sound Toggle Button
+   ============================================================ */
+.sound-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 900;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.3);
+  background: rgba(0,0,0,.3);
+  backdrop-filter: blur(4px);
+  color: var(--white);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), border-color var(--transition);
+}
+.sound-toggle:hover {
+  background: rgba(0,0,0,.5);
+  border-color: rgba(255,255,255,.5);
+}
+.sound-toggle--muted {
+  opacity: .5;
+}
+
+/* ============================================================
+   25. Halftime Banner (Player)
+   ============================================================ */
+.play-halftime {
+  text-align: center;
+  padding: 2rem;
+  animation: popIn .5s ease;
+}
+.halftime-banner--player {
+  margin-bottom: 1.5rem;
+}
+.halftime-encouragement {
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  opacity: .8;
+  font-weight: 600;
+}

@@ -10,6 +10,9 @@
   var nicknameInput = document.getElementById('nickname');
   var joinBtn       = document.getElementById('join-btn');
   var joinMessage   = document.getElementById('join-message');
+  var avatarGrid    = document.getElementById('avatar-grid');
+  var avatars       = ['🐱','🐶','🐻','🐼','🦊','🐸','🐵','🐰','🐯','🦁','🐲','🦄','🐧','🐥','🦋','🐙','🦀','🐳','🦉','🐺'];
+  var selectedAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
   function showMessage(text, type) {
     if (!joinMessage) return;
@@ -59,6 +62,7 @@
         // Store for play page - socket join happens there
         sessionStorage.setItem('quizbattle_pin', data.pin);
         sessionStorage.setItem('quizbattle_nickname', data.nickname);
+        sessionStorage.setItem('quizbattle_avatar', selectedAvatar);
         window.location.href = '/play.html';
       })
       .catch(function (err) {
@@ -67,6 +71,27 @@
         showMessage(err.message || 'Could not join game', 'error');
       });
   });
+
+  /* ---- avatar selection ---- */
+  // Highlight default random avatar
+  if (avatarGrid) {
+    var allAvatarBtns = avatarGrid.querySelectorAll('.avatar-option');
+    allAvatarBtns.forEach(function (btn) {
+      if (btn.dataset.avatar === selectedAvatar) btn.classList.add('avatar-option--selected');
+      btn.addEventListener('click', function () {
+        allAvatarBtns.forEach(function (b) { b.classList.remove('avatar-option--selected'); });
+        btn.classList.add('avatar-option--selected');
+        selectedAvatar = btn.dataset.avatar;
+      });
+    });
+  }
+
+  /* ---- auto-fill PIN from URL query ---- */
+  var urlPin = new URLSearchParams(window.location.search).get('pin');
+  if (urlPin && /^\d{6}$/.test(urlPin)) {
+    pinInput.value = urlPin;
+    if (nicknameInput) nicknameInput.focus();
+  }
 
   /* ---- auto-format PIN input ---- */
   pinInput.addEventListener('input', function () {

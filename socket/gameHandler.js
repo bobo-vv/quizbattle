@@ -20,7 +20,7 @@ function gameHandler(io) {
     });
 
     // join-game: player joins
-    socket.on('join-game', ({ pin, nickname }) => {
+    socket.on('join-game', ({ pin, nickname, avatar }) => {
       const game = games.get(pin);
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
@@ -56,6 +56,7 @@ function gameHandler(io) {
         }
         game.players.set(socket.id, {
           nickname,
+          avatar: avatar || '',
           score: 0,
           streak: 0,
           answers: [],
@@ -94,13 +95,19 @@ function gameHandler(io) {
         return socket.emit('error', { message: 'This quiz has no questions. Please add questions first.' });
       }
 
-      game.state = 'playing';
-      io.to(pin).emit('game-started', {
+      game.state = 'countdown';
+      io.to(pin).emit('game-countdown', {
         totalQuestions: game.quiz.questions.length,
       });
 
-      // Auto-trigger first question
-      sendQuestion(io, game);
+      // 4-second countdown (3-2-1-GO!) then start
+      setTimeout(() => {
+        game.state = 'playing';
+        io.to(pin).emit('game-started', {
+          totalQuestions: game.quiz.questions.length,
+        });
+        sendQuestion(io, game);
+      }, 4000);
     });
 
     // next-question: from leaderboard/halftime → next question
@@ -213,6 +220,16 @@ function gameHandler(io) {
       }
     });
 
+    // reaction: player sends emoji reaction (fire and forget)
+    socket.on('reaction', ({ pin, emoji }) => {
+      const game = games.get(pin);
+      if (!game) return;
+      const player = game.players.get(socket.id);
+      if (!player) return;
+      // Broadcast to everyone in room (including host)
+      io.to(pin).emit('reaction', { nickname: player.nickname, emoji: emoji });
+    });
+
     // disconnect
     socket.on('disconnect', () => {
       games.forEach((game, pin) => {
@@ -233,7 +250,7 @@ function gameHandler(io) {
 function getPlayersList(game) {
   const players = [];
   game.players.forEach((player) => {
-    players.push({ nickname: player.nickname, score: player.score });
+    players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score });
   });
   return players;
 }
@@ -350,6 +367,7 @@ function getRankings(game) {
   game.players.forEach((player) => {
     rankings.push({
       nickname: player.nickname,
+      avatar: player.avatar || '',
       score: player.score,
       streak: player.streak,
     });

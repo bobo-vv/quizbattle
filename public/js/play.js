@@ -7,6 +7,7 @@
   /* ---- state ---- */
   var pin           = sessionStorage.getItem('quizbattle_pin');
   var nickname      = sessionStorage.getItem('quizbattle_nickname');
+  var avatar        = sessionStorage.getItem('quizbattle_avatar') || '🐱';
   var socket        = null;
   var currentState  = 'waiting';
   var currentQId    = null;
@@ -91,7 +92,7 @@
 
   /* ---- socket ---- */
   socket = io();
-  socket.emit('join-game', { pin: pin, nickname: nickname });
+  socket.emit('join-game', { pin: pin, nickname: nickname, avatar: avatar });
 
   socket.on('game-joined', function () {
     switchState('waiting');
@@ -99,6 +100,40 @@
 
   socket.on('player-joined', function () {
     // stay in waiting
+  });
+
+  /* ---- countdown 3-2-1-GO! ---- */
+  var countdownOverlay = document.getElementById('game-countdown-overlay');
+  var countdownNumEl   = document.getElementById('countdown-number');
+
+  socket.on('game-countdown', function () {
+    if (countdownOverlay) countdownOverlay.hidden = false;
+    var count = 3;
+    if (countdownNumEl) countdownNumEl.textContent = count;
+    if (countdownNumEl) countdownNumEl.className = 'countdown-number countdown-number--pop';
+    QuizSound.countdownBeep && QuizSound.countdownBeep(count);
+
+    var cdInterval = setInterval(function () {
+      count--;
+      if (count > 0) {
+        if (countdownNumEl) {
+          countdownNumEl.textContent = count;
+          countdownNumEl.className = 'countdown-number countdown-number--pop';
+          void countdownNumEl.offsetWidth; // force reflow for animation
+          countdownNumEl.className = 'countdown-number countdown-number--pop';
+        }
+        QuizSound.countdownBeep && QuizSound.countdownBeep(count);
+      } else {
+        clearInterval(cdInterval);
+        if (countdownNumEl) {
+          countdownNumEl.textContent = 'GO!';
+          countdownNumEl.className = 'countdown-number countdown-number--go';
+        }
+        setTimeout(function () {
+          if (countdownOverlay) countdownOverlay.hidden = true;
+        }, 800);
+      }
+    }, 1000);
   });
 
   socket.on('game-started', function () {
@@ -320,6 +355,38 @@
   socket.on('error', function (data) {
     alert(data.message || data.error || 'Error');
   });
+
+  /* ---- reaction bar ---- */
+  var reactionBar = document.getElementById('reaction-bar');
+  var reactionCooldown = false;
+
+  // Show reaction bar during answered/result states
+  function updateReactionBar() {
+    if (!reactionBar) return;
+    reactionBar.hidden = !(currentState === 'answered' || currentState === 'result');
+  }
+
+  // Override switchState to also update reaction bar
+  var _origSwitchState = switchState;
+  switchState = function (newState) {
+    _origSwitchState(newState);
+    updateReactionBar();
+  };
+
+  if (reactionBar) {
+    reactionBar.addEventListener('click', function (e) {
+      var btn = e.target.closest('.reaction-btn');
+      if (!btn || reactionCooldown) return;
+      var emoji = btn.dataset.emoji;
+      socket.emit('reaction', { pin: pin, emoji: emoji });
+      reactionCooldown = true;
+      btn.classList.add('reaction-btn--sent');
+      setTimeout(function () {
+        reactionCooldown = false;
+        btn.classList.remove('reaction-btn--sent');
+      }, 2000);
+    });
+  }
 
   /* ---- sound toggle ---- */
   if (soundToggleBtn) {

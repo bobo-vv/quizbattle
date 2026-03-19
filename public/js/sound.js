@@ -353,7 +353,7 @@ var QuizSound = (function () {
     }
   }
 
-  // Lobby — bouncy, playful, exciting waiting music 🎵
+  // Lobby — dreamy arpeggio + groovy rhythm (exciting & cute, NOT silly) 🎵
   function lobbyMusic() {
     if (!enabled) return;
     stopMusic();
@@ -361,72 +361,76 @@ var QuizSound = (function () {
     var nodes = [];
     var now = c.currentTime;
 
-    // Bouncy pentatonic melody (cute & exciting)
-    var melody = [
-      { f: 784, d: 0.2 }, { f: 880, d: 0.2 }, { f: 1047, d: 0.2 }, { f: 880, d: 0.2 },
-      { f: 1175, d: 0.3 }, { f: 1047, d: 0.15 }, { f: 880, d: 0.15 },
-      { f: 784, d: 0.2 }, { f: 659, d: 0.2 }, { f: 784, d: 0.3 },
-      { f: 1047, d: 0.2 }, { f: 1175, d: 0.2 }, { f: 1319, d: 0.3 },
-      { f: 1175, d: 0.15 }, { f: 1047, d: 0.15 }, { f: 880, d: 0.2 },
-      { f: 784, d: 0.4 }, { f: 0, d: 0.2 },
+    // Gentle arpeggio pattern — chord tones flowing up and down (dreamy)
+    var arpeggio = [
+      { f: 523, d: 0.25 }, { f: 659, d: 0.25 }, { f: 784, d: 0.25 }, { f: 1047, d: 0.25 },
+      { f: 784, d: 0.25 }, { f: 659, d: 0.25 },
+      { f: 587, d: 0.25 }, { f: 740, d: 0.25 }, { f: 880, d: 0.25 }, { f: 1175, d: 0.25 },
+      { f: 880, d: 0.25 }, { f: 740, d: 0.25 },
+      { f: 494, d: 0.25 }, { f: 622, d: 0.25 }, { f: 740, d: 0.25 }, { f: 988, d: 0.25 },
+      { f: 740, d: 0.25 }, { f: 622, d: 0.25 },
+      { f: 440, d: 0.25 }, { f: 554, d: 0.25 }, { f: 659, d: 0.25 }, { f: 880, d: 0.25 },
+      { f: 659, d: 0.25 }, { f: 554, d: 0.25 },
     ];
 
-    // Bouncy bass (adds excitement)
+    // Warm bass — steady pulse (groovy, not bouncy)
     var bass = [
-      { f: 196, d: 0.3 }, { f: 262, d: 0.3 }, { f: 220, d: 0.3 },
-      { f: 247, d: 0.3 }, { f: 196, d: 0.3 }, { f: 175, d: 0.3 },
-      { f: 196, d: 0.3 }, { f: 262, d: 0.3 }, { f: 220, d: 0.3 },
-      { f: 247, d: 0.3 }, { f: 262, d: 0.3 }, { f: 196, d: 0.3 },
+      { f: 131, d: 0.5 }, { f: 131, d: 0.5 }, { f: 131, d: 0.5 },
+      { f: 147, d: 0.5 }, { f: 147, d: 0.5 }, { f: 147, d: 0.5 },
+      { f: 124, d: 0.5 }, { f: 124, d: 0.5 }, { f: 124, d: 0.5 },
+      { f: 110, d: 0.5 }, { f: 110, d: 0.5 }, { f: 110, d: 0.5 },
     ];
 
-    // Offbeat bounce (cute "doot doot")
-    var bounce = [
-      { f: 523, d: 0.12 }, { f: 0, d: 0.18 },
-      { f: 523, d: 0.12 }, { f: 0, d: 0.18 },
-      { f: 587, d: 0.12 }, { f: 0, d: 0.18 },
-      { f: 523, d: 0.12 }, { f: 0, d: 0.18 },
+    // Soft rhythmic taps — gentle groove pulse
+    var rhythm = [
+      { f: 1200, d: 0.08 }, { f: 0, d: 0.42 },
+      { f: 900, d: 0.06 }, { f: 0, d: 0.19 },
+      { f: 1200, d: 0.08 }, { f: 0, d: 0.42 },
+      { f: 900, d: 0.06 }, { f: 0, d: 0.19 },
+      { f: 1200, d: 0.08 }, { f: 0, d: 0.42 },
+      { f: 1400, d: 0.06 }, { f: 0, d: 0.19 },
     ];
 
     var loopLen = 0;
-    melody.forEach(function (n) { loopLen += n.d; });
+    arpeggio.forEach(function (n) { loopLen += n.d; });
     var totalTime = 180;
 
     for (var loop = 0; loop < Math.ceil(totalTime / loopLen); loop++) {
       var ls = now + loop * loopLen;
 
-      // Melody
+      // Arpeggio melody — gentle bell tones
       var mt = ls;
-      for (var i = 0; i < melody.length; i++) {
-        if (melody[i].f > 0) {
-          var mn = bell(melody[i].f, mt, melody[i].d * 0.8, musicGain, 0.09, { slide: 1.08 });
+      for (var i = 0; i < arpeggio.length; i++) {
+        if (arpeggio[i].f > 0) {
+          var mn = bell(arpeggio[i].f, mt, arpeggio[i].d * 1.2, musicGain, 0.06, { vibrato: true, vibratoSpeed: 4, vibratoDepth: 0.006 });
           mn.forEach(function (o) { nodes.push(o); });
         }
-        mt += melody[i].d;
+        mt += arpeggio[i].d;
       }
 
-      // Bass
+      // Bass — warm triangle tones
       var bt = ls;
       for (var j = 0; j < bass.length; j++) {
         if (bass[j].f > 0) {
-          var bn = bell(bass[j].f, bt, bass[j].d * 0.85, musicGain, 0.07, { vibrato: true, vibratoSpeed: 3 });
+          var bn = bell(bass[j].f, bt, bass[j].d * 0.9, musicGain, 0.08, { vibrato: true, vibratoSpeed: 2.5, vibratoDepth: 0.008 });
           bn.forEach(function (o) { nodes.push(o); });
         }
         bt += bass[j].d;
       }
 
-      // Offbeat bounce
-      var ot = ls;
-      for (var k = 0; k < bounce.length; k++) {
-        if (bounce[k].f > 0) {
-          var pn = pop(bounce[k].f, ot, musicGain, 0.04);
-          nodes.push(pn);
+      // Soft rhythm taps — very quiet percussive pops
+      var rt = ls;
+      for (var k = 0; k < rhythm.length; k++) {
+        if (rhythm[k].f > 0) {
+          var rn = pop(rhythm[k].f, rt, musicGain, 0.025);
+          nodes.push(rn);
         }
-        ot += bounce[k].d;
+        rt += rhythm[k].d;
       }
 
-      // Occasional twinkle accent
-      if (loop % 2 === 0) {
-        twinkle(ls + loopLen * 0.7, musicGain, 0.02, 3);
+      // Occasional twinkle sparkle (every 4 loops)
+      if (loop % 4 === 0) {
+        twinkle(ls + loopLen * 0.5, musicGain, 0.015, 3);
       }
     }
 
@@ -529,6 +533,17 @@ var QuizSound = (function () {
     if (!enabled) stopMusic();
   }
 
+  // Countdown beep — ascending bell tones for 3-2-1-GO! 🔔
+  function countdownBeep(count) {
+    if (!enabled) return;
+    var c = getCtx(); var now = c.currentTime;
+    // Higher pitch as count decreases (3=low, 2=mid, 1=high)
+    var pitches = { 3: 523, 2: 659, 1: 880 };
+    var freq = pitches[count] || 523;
+    bell(freq, now, 0.3, sfxGain, 0.2, { slide: 1.1 });
+    pop(freq * 1.5, now + 0.05, sfxGain, 0.1);
+  }
+
   /* ---- Public API ---- */
   return {
     playerJoined: playerJoined,
@@ -541,6 +556,7 @@ var QuizSound = (function () {
     gameStart: gameStart,
     lobbyMusic: lobbyMusic,
     countdownMusic: countdownMusic,
+    countdownBeep: countdownBeep,
     stopMusic: stopMusic,
     toggle: toggle,
     isEnabled: isEnabled,

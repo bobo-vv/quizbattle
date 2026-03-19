@@ -17,6 +17,7 @@
       <div class="lobby__pin-box">
         <p class="lobby__pin-label" data-i18n="host.gamePin">Game PIN:</p>
         <p id="game-pin" class="lobby__pin">------</p>
+        <div id="lobby-qr" class="lobby__qr"></div>
       </div>
       <div class="lobby__players">
         <h2 data-i18n="host.playersJoined">ผู้เล่นที่เข้าร่วม</h2>
@@ -170,9 +171,18 @@
     </div>
   </section>
 
+  <!-- Countdown 3-2-1-GO! overlay -->
+  <div id="game-countdown-overlay" class="game-countdown" hidden>
+    <span id="countdown-number" class="countdown-number">3</span>
+  </div>
+
+  <!-- Floating reaction emoji container -->
+  <div id="reaction-container" class="reaction-container"></div>
+
   <!-- Sound toggle button -->
   <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">&#128266;</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="/js/sound.js"></script>
