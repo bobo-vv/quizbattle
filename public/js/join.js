@@ -1,13 +1,15 @@
 /* ============================================================
    QuizBattle – Join Game
+   Uses REST API to validate PIN, then redirects to play.html
+   where the actual socket connection happens (only once).
    ============================================================ */
 (function () {
   'use strict';
 
-  var pinInput     = document.getElementById('game-pin');
+  var pinInput      = document.getElementById('game-pin');
   var nicknameInput = document.getElementById('nickname');
-  var joinBtn      = document.getElementById('join-btn');
-  var joinMessage  = document.getElementById('join-message');
+  var joinBtn       = document.getElementById('join-btn');
+  var joinMessage   = document.getElementById('join-message');
 
   function showMessage(text, type) {
     if (!joinMessage) return;
@@ -33,7 +35,7 @@
     return { pin: pin, nickname: nick };
   }
 
-  /* ---- join ---- */
+  /* ---- join via REST API (no socket here) ---- */
   joinBtn.addEventListener('click', function () {
     var data = validate();
     if (!data) return;
@@ -41,33 +43,29 @@
     joinBtn.disabled = true;
     joinBtn.textContent = '...';
 
-    var socket = io();
+    // Validate PIN via REST API - no socket connection needed
+    fetch('/api/games/' + data.pin)
+      .then(function (res) {
+        if (!res.ok) {
+          return res.json().then(function (err) { throw new Error(err.error || 'Game not found'); });
+        }
+        return res.json();
+      })
+      .then(function (game) {
+        if (game.state !== 'lobby') {
+          throw new Error('Game has already started');
+        }
 
-    socket.emit('join-game', { pin: data.pin, nickname: data.nickname });
-
-    socket.on('game-joined', function () {
-      // Store for play page
-      sessionStorage.setItem('quizbattle_pin', data.pin);
-      sessionStorage.setItem('quizbattle_nickname', data.nickname);
-      window.location.href = '/play.html';
-    });
-
-    socket.on('error', function (err) {
-      joinBtn.disabled = false;
-      joinBtn.textContent = typeof t === 'function' ? t('join.joinBtn') : 'Join!';
-      showMessage(err.message || err.error || 'Could not join game', 'error');
-      socket.disconnect();
-    });
-
-    // Timeout after 5s
-    setTimeout(function () {
-      if (joinBtn.disabled) {
+        // Store for play page - socket join happens there
+        sessionStorage.setItem('quizbattle_pin', data.pin);
+        sessionStorage.setItem('quizbattle_nickname', data.nickname);
+        window.location.href = '/play.html';
+      })
+      .catch(function (err) {
         joinBtn.disabled = false;
         joinBtn.textContent = typeof t === 'function' ? t('join.joinBtn') : 'Join!';
-        showMessage('Connection timeout', 'error');
-        socket.disconnect();
-      }
-    }, 5000);
+        showMessage(err.message || 'Could not join game', 'error');
+      });
   });
 
   /* ---- auto-format PIN input ---- */

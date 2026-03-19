@@ -25,30 +25,38 @@ function gameHandler(io) {
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
       }
-      if (game.state !== 'lobby') {
-        return socket.emit('error', { message: 'Game is not accepting players' });
+      if (game.state === 'finished') {
+        return socket.emit('error', { message: 'Game has already ended' });
       }
       if (!nickname || nickname.length > 20) {
         return socket.emit('error', { message: 'Invalid nickname' });
       }
 
-      // Check for duplicate nickname
-      let nicknameExists = false;
-      game.players.forEach((player) => {
+      // Check for duplicate nickname - allow reconnection (replace old socket)
+      let existingSocketId = null;
+      game.players.forEach((player, sid) => {
         if (player.nickname === nickname) {
-          nicknameExists = true;
+          existingSocketId = sid;
         }
       });
-      if (nicknameExists) {
-        return socket.emit('error', { message: 'Nickname already taken' });
-      }
 
-      game.players.set(socket.id, {
-        nickname,
-        score: 0,
-        streak: 0,
-        answers: [],
-      });
+      if (existingSocketId) {
+        // Reconnecting player - preserve score and answers
+        const oldPlayer = game.players.get(existingSocketId);
+        game.players.delete(existingSocketId);
+        game.players.set(socket.id, oldPlayer);
+      } else {
+        // New player
+        if (game.state !== 'lobby') {
+          return socket.emit('error', { message: 'Game has already started' });
+        }
+        game.players.set(socket.id, {
+          nickname,
+          score: 0,
+          streak: 0,
+          answers: [],
+        });
+      }
 
       socket.join(pin);
 
