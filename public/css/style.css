@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Complete Kahoot-Inspired CSS Theme
+   QuizBattle – Complete CSS Theme
    ============================================================ */
 
 /* ---- Google Fonts ---- */
@@ -2386,6 +2386,9 @@ button { cursor: pointer; border: none; background: none; }
   background: rgba(0,0,0,.85);
   backdrop-filter: blur(8px);
 }
+.game-countdown[hidden] {
+  display: none;
+}
 .countdown-number {
   font-size: 8rem;
   font-weight: 900;
@@ -2423,6 +2426,9 @@ button { cursor: pointer; border: none; background: none; }
   padding: .5rem .8rem;
   border-radius: var(--radius-full);
   z-index: 500;
+}
+.reaction-bar[hidden] {
+  display: none;
 }
 .reaction-btn {
   width: 44px;

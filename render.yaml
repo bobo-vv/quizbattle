@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kahoot-clone
+    name: quizbattle
     runtime: node
     plan: free
     buildCommand: npm install
@@ -12,9 +12,9 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: kahoot-db
+          name: quizbattle-db
           property: connectionString
 
 databases:
-  - name: kahoot-db
+  - name: quizbattle-db
     plan: free
