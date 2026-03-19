@@ -281,7 +281,9 @@
       return;
     }
 
-    // Save quiz metadata
+    saveQuizBtn.disabled = true;
+
+    // Step 1: Save quiz metadata first (must get quizId before saving questions)
     var saveMetaPromise;
     if (quizId) {
       saveMetaPromise = fetch('/api/quizzes/' + quizId, {
@@ -297,22 +299,69 @@
       }).then(function (res) { return res.json(); })
         .then(function (data) {
           quizId = data.id;
-          // Update URL without reloading
           window.history.replaceState(null, '', '/create.html?id=' + quizId);
           return data;
         });
     }
 
-    // Also save current question if dirty
-    var promises = [saveMetaPromise];
-    if (dirty && selectedIndex >= 0) {
-      promises.push(saveCurrentQuestion(true));
-    }
-
-    Promise.all(promises)
-      .then(function () { showToast(t('create.save') + ' OK', 'success'); })
-      .catch(function (err) { showToast('Error: ' + err.message, 'error'); });
+    // Step 2: AFTER quiz is saved, save all questions sequentially
+    saveMetaPromise
+      .then(function () {
+        return saveAllQuestions();
+      })
+      .then(function () {
+        showToast(t('create.save') + ' OK', 'success');
+      })
+      .catch(function (err) {
+        showToast('Error: ' + (err.message || 'Save failed'), 'error');
+      })
+      .finally(function () {
+        saveQuizBtn.disabled = false;
+      });
   });
+
+  /* ---- save ALL questions to server ---- */
+  function saveAllQuestions() {
+    var chain = Promise.resolve();
+    questions.forEach(function (q, i) {
+      chain = chain.then(function () {
+        var data = {
+          type: q.type || 'multiple-choice',
+          question_text: q.question_text || '',
+          image_url: q.image_url || null,
+          time_limit: q.time_limit || 20,
+          points: q.points || 1000,
+          sort_order: i,
+          options: q.options || []
+        };
+
+        // Skip questions with no text
+        if (!data.question_text.trim()) return Promise.resolve();
+
+        var url, method;
+        if (q.id) {
+          url = '/api/quizzes/questions/' + q.id;
+          method = 'PUT';
+        } else {
+          url = '/api/quizzes/' + quizId + '/questions';
+          method = 'POST';
+        }
+
+        return fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (saved) {
+            if (saved.id) q.id = saved.id;
+            if (saved.options) q.options = saved.options;
+          });
+      });
+    });
+    dirty = false;
+    return chain;
+  }
 
   /* ---- load existing quiz ---- */
   function loadQuiz(id) {

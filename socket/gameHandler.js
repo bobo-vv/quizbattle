@@ -78,6 +78,9 @@ function gameHandler(io) {
       if (game.players.size === 0) {
         return socket.emit('error', { message: 'No players have joined' });
       }
+      if (!game.quiz.questions || game.quiz.questions.length === 0) {
+        return socket.emit('error', { message: 'This quiz has no questions. Please add questions first.' });
+      }
 
       game.state = 'playing';
       io.to(pin).emit('game-started', {
