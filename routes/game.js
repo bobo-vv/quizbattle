@@ -16,7 +16,7 @@ function generatePin() {
 // POST /create - create a new game session
 router.post('/create', requireAuth, async (req, res) => {
   try {
-    const { quizId } = req.body;
+    const { quizId, teamMode, teamCount } = req.body;
     if (!quizId) {
       return res.status(400).json({ error: 'quizId is required' });
     }
@@ -65,6 +65,9 @@ router.post('/create', requireAuth, async (req, res) => {
       currentQuestion: -1,
       timer: null,
       maxPlayers: limits.maxPlayers,
+      teamMode: teamMode || false,
+      teamCount: (teamMode && teamCount >= 2 && teamCount <= 4) ? teamCount : 0,
+      teamNextIndex: 0,
     };
 
     games.set(pin, game);
@@ -72,6 +75,51 @@ router.post('/create', requireAuth, async (req, res) => {
     res.status(201).json({ pin });
   } catch (err) {
     console.error('Create game error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /history - list past game sessions for logged-in host
+router.get('/history', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM game_sessions WHERE host_id = $1 ORDER BY ended_at DESC LIMIT 50`,
+      [req.session.hostId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get history error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /history/:id - get game detail with players and answers
+router.get('/history/:id', requireAuth, async (req, res) => {
+  try {
+    const session = await pool.query(
+      'SELECT * FROM game_sessions WHERE id = $1 AND host_id = $2',
+      [req.params.id, req.session.hostId]
+    );
+    if (session.rows.length === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const players = await pool.query(
+      'SELECT * FROM game_players WHERE game_session_id = $1 ORDER BY final_rank ASC',
+      [req.params.id]
+    );
+    const answers = await pool.query(
+      'SELECT * FROM player_answers WHERE game_session_id = $1 ORDER BY nickname, question_id',
+      [req.params.id]
+    );
+
+    res.json({
+      session: session.rows[0],
+      players: players.rows,
+      answers: answers.rows,
+    });
+  } catch (err) {
+    console.error('Get history detail error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

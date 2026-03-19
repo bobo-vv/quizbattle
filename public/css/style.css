@@ -2546,3 +2546,394 @@ button { cursor: pointer; border: none; background: none; }
   opacity: .8;
   font-weight: 600;
 }
+
+/* ============================================================
+   26. Game History
+   ============================================================ */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.history-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.5rem;
+  border: 1px solid rgba(255,255,255,.1);
+  transition: transform var(--transition), background var(--transition);
+}
+.history-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,.12);
+}
+.history-card__title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0 0 .4rem 0;
+}
+.history-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1rem;
+  font-size: .85rem;
+  opacity: .7;
+  font-weight: 600;
+}
+.history-card__team-badge {
+  background: var(--purple-glow);
+  color: var(--white);
+  padding: .1rem .5rem;
+  border-radius: var(--radius-full);
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+/* History detail */
+.history-detail__back {
+  margin-bottom: 1.5rem;
+}
+.history-detail__header {
+  margin-bottom: 2rem;
+}
+.history-detail__title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 0 0 .5rem 0;
+}
+.history-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+  font-size: .9rem;
+  opacity: .7;
+  font-weight: 600;
+}
+.history-detail h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 1.5rem 0 .75rem 0;
+}
+.history-detail__question-text {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-correct { color: var(--success); font-weight: 900; }
+.history-wrong { color: var(--danger); font-weight: 900; }
+
+/* ============================================================
+   27. Quiz Preview
+   ============================================================ */
+.preview-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.preview-card {
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  border: 1px solid rgba(255,255,255,.1);
+  animation: slideUp .4s ease;
+}
+.preview-card__question-num {
+  font-size: .9rem;
+  opacity: .7;
+  font-weight: 700;
+  margin-bottom: .5rem;
+}
+.preview-card__question-text {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: .5rem;
+  line-height: 1.4;
+}
+.preview-card__image {
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+.preview-card__meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: .85rem;
+  opacity: .7;
+  font-weight: 600;
+}
+.preview-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+.preview-option {
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.preview-option--correct {
+  box-shadow: 0 0 0 3px var(--white), 0 0 15px rgba(38,137,12,.4);
+}
+.preview-option__shape { font-size: 1.3rem; opacity: .7; }
+.preview-option__text { flex: 1; }
+.preview-option__badge {
+  background: rgba(255,255,255,.3);
+  padding: .2rem .6rem;
+  border-radius: var(--radius-full);
+  font-size: .7rem;
+  font-weight: 800;
+}
+.preview-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+/* ============================================================
+   28. Team Mode
+   ============================================================ */
+.game-mode-modal .modal__content {
+  max-width: 480px;
+}
+.mode-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.mode-option {
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 3px solid var(--gray-200);
+  background: var(--white);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.mode-option:hover {
+  transform: translateY(-2px);
+}
+.mode-option--selected {
+  border-color: var(--purple-mid);
+  background: #F3E8FF;
+}
+.mode-option__icon {
+  font-size: 2.5rem;
+  margin-bottom: .5rem;
+}
+.mode-option__label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--gray-800);
+}
+.team-count-section {
+  margin-bottom: 1.5rem;
+}
+.team-count-section label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  color: var(--gray-800);
+}
+.team-count-buttons {
+  display: flex;
+  gap: .5rem;
+}
+.team-count-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  border: 3px solid var(--gray-200);
+  background: var(--white);
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  color: var(--gray-800);
+  transition: border-color var(--transition), background var(--transition);
+}
+.team-count-btn--selected {
+  border-color: var(--purple-mid);
+  background: #F3E8FF;
+  color: var(--purple-mid);
+}
+
+/* Team badge in game */
+.team-badge {
+  display: inline-block;
+  padding: .2rem .7rem;
+  border-radius: var(--radius-full);
+  font-size: .75rem;
+  font-weight: 800;
+  color: var(--white);
+}
+.team-badge--red    { background: var(--answer-red); }
+.team-badge--blue   { background: var(--answer-blue); }
+.team-badge--green  { background: var(--answer-green); }
+.team-badge--yellow { background: var(--answer-yellow); }
+
+/* Team columns in lobby */
+.team-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.team-column {
+  background: rgba(255,255,255,.08);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border-top: 4px solid;
+}
+.team-column--red    { border-color: var(--answer-red); }
+.team-column--blue   { border-color: var(--answer-blue); }
+.team-column--green  { border-color: var(--answer-green); }
+.team-column--yellow { border-color: var(--answer-yellow); }
+.team-column__title {
+  font-weight: 800;
+  font-size: .9rem;
+  margin-bottom: .5rem;
+  opacity: .9;
+}
+.team-column__player {
+  font-size: .85rem;
+  padding: .2rem 0;
+  font-weight: 600;
+}
+
+/* Team leaderboard */
+.team-leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  margin-bottom: 1.5rem;
+}
+.team-leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .8rem 1.2rem;
+  border-radius: var(--radius-md);
+  color: var(--white);
+  font-weight: 800;
+}
+.team-leaderboard-item--red    { background: var(--answer-red); }
+.team-leaderboard-item--blue   { background: var(--answer-blue); }
+.team-leaderboard-item--green  { background: var(--answer-green); }
+.team-leaderboard-item--yellow { background: var(--answer-yellow); }
+.team-leaderboard-item__rank { font-size: 1.3rem; width: 40px; }
+.team-leaderboard-item__name { flex: 1; font-size: 1rem; }
+.team-leaderboard-item__score { font-size: 1.1rem; }
+
+/* ============================================================
+   29. Quiz Statistics
+   ============================================================ */
+.stats-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.stats-card {
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.stats-card__num {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: .25rem;
+}
+.stats-card__label {
+  font-size: .85rem;
+  opacity: .7;
+  font-weight: 600;
+}
+.stats-card__unit {
+  font-size: .75rem;
+  opacity: .5;
+  font-weight: 600;
+}
+
+.stats-section h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.stats-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+.stats-bar-item {
+  background: rgba(255,255,255,.06);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.2rem;
+}
+.stats-bar-item__question {
+  font-size: .85rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  opacity: .9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stats-bar-item__bar-wrap {
+  background: rgba(255,255,255,.1);
+  border-radius: var(--radius-full);
+  height: 24px;
+  overflow: hidden;
+  position: relative;
+}
+.stats-bar-item__bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width .8s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: .5rem;
+  font-size: .75rem;
+  font-weight: 800;
+  color: var(--white);
+  min-width: 40px;
+}
+.stats-bar-item__bar--high   { background: var(--success); }
+.stats-bar-item__bar--medium { background: var(--warning); }
+.stats-bar-item__bar--low    { background: var(--danger); }
+
+@media (max-width: 768px) {
+  .history-card { flex-direction: column; align-items: flex-start; gap: .75rem; }
+  .preview-options { grid-template-columns: 1fr; }
+  .mode-options { grid-template-columns: 1fr; }
+  .team-columns { grid-template-columns: 1fr 1fr; }
+  .stats-overview { grid-template-columns: 1fr 1fr; }
+}

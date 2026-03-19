@@ -441,4 +441,69 @@ router.post('/:id/import', async (req, res) => {
   }
 });
 
+// GET /:id/stats - quiz statistics from game history
+router.get('/:id/stats', async (req, res) => {
+  try {
+    // Verify quiz belongs to host
+    const quizResult = await pool.query(
+      'SELECT id, title FROM quizzes WHERE id = $1 AND host_id = $2',
+      [req.params.id, req.session.hostId]
+    );
+    if (quizResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    // Overview stats
+    const overview = await pool.query(
+      `SELECT COUNT(*)::int AS times_played,
+              COALESCE(SUM(player_count), 0)::int AS total_players,
+              COALESCE(AVG(player_count), 0)::float AS avg_players
+       FROM game_sessions WHERE quiz_id = $1 AND host_id = $2`,
+      [req.params.id, req.session.hostId]
+    );
+
+    // Average score per player
+    const avgScore = await pool.query(
+      `SELECT COALESCE(AVG(final_score), 0)::float AS avg_score,
+              COALESCE(AVG(CASE WHEN total_questions > 0 THEN total_correct::float / total_questions ELSE 0 END), 0)::float AS avg_correct_rate
+       FROM game_players gp
+       JOIN game_sessions gs ON gp.game_session_id = gs.id
+       WHERE gs.quiz_id = $1 AND gs.host_id = $2`,
+      [req.params.id, req.session.hostId]
+    );
+
+    // Per-question correct rate
+    const questionStats = await pool.query(
+      `SELECT pa.question_text,
+              COUNT(*)::int AS total_answers,
+              SUM(CASE WHEN pa.is_correct THEN 1 ELSE 0 END)::int AS correct_answers
+       FROM player_answers pa
+       JOIN game_sessions gs ON pa.game_session_id = gs.id
+       WHERE gs.quiz_id = $1 AND gs.host_id = $2
+       GROUP BY pa.question_text, pa.question_id
+       ORDER BY pa.question_id`,
+      [req.params.id, req.session.hostId]
+    );
+
+    res.json({
+      title: quizResult.rows[0].title,
+      timesPlayed: overview.rows[0].times_played,
+      totalPlayers: overview.rows[0].total_players,
+      avgScore: Math.round(avgScore.rows[0].avg_score),
+      avgCorrectRate: Math.round(avgScore.rows[0].avg_correct_rate * 100),
+      questions: questionStats.rows.map(function (q) {
+        return {
+          questionText: q.question_text,
+          totalAnswers: q.total_answers,
+          correctAnswers: q.correct_answers,
+          correctRate: q.total_answers > 0 ? Math.round((q.correct_answers / q.total_answers) * 100) : 0,
+        };
+      }),
+    });
+  } catch (err) {
+    console.error('Get quiz stats error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

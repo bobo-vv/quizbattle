@@ -1,4 +1,5 @@
 const { games } = require('../routes/game');
+const { pool } = require('../db/db');
 
 function gameHandler(io) {
   io.on('connection', (socket) => {
@@ -16,6 +17,8 @@ function gameHandler(io) {
         quizTitle: game.quiz.title,
         totalQuestions: game.quiz.questions.length,
         players: getPlayersList(game),
+        teamMode: game.teamMode || false,
+        teamCount: game.teamCount || 0,
       });
     });
 
@@ -54,12 +57,19 @@ function gameHandler(io) {
         if (game.maxPlayers && game.players.size >= game.maxPlayers) {
           return socket.emit('error', { message: 'Game is full (max ' + game.maxPlayers + ' players)' });
         }
+        var teamName = null;
+        if (game.teamMode && game.teamCount >= 2) {
+          var teamNames = ['red', 'blue', 'green', 'yellow'].slice(0, game.teamCount);
+          teamName = teamNames[game.teamNextIndex % game.teamCount];
+          game.teamNextIndex++;
+        }
         game.players.set(socket.id, {
           nickname,
           avatar: avatar || '',
           score: 0,
           streak: 0,
           answers: [],
+          team: teamName,
         });
       }
 
@@ -67,11 +77,14 @@ function gameHandler(io) {
 
       const players = getPlayersList(game);
 
+      const joiningPlayer = game.players.get(socket.id);
+
       // Notify everyone in the room (including host)
       io.to(pin).emit('player-joined', {
         nickname,
         playerCount: game.players.size,
         players,
+        teamMode: game.teamMode || false,
       });
 
       // Confirm to joining player
@@ -79,6 +92,8 @@ function gameHandler(io) {
         pin: game.pin,
         quizTitle: game.quiz.title,
         totalQuestions: game.quiz.questions.length,
+        team: joiningPlayer ? joiningPlayer.team : null,
+        teamMode: game.teamMode || false,
       });
     });
 
@@ -95,6 +110,7 @@ function gameHandler(io) {
         return socket.emit('error', { message: 'This quiz has no questions. Please add questions first.' });
       }
 
+      game.startedAt = new Date();
       game.state = 'countdown';
       io.to(pin).emit('game-countdown', {
         totalQuestions: game.quiz.questions.length,
@@ -250,9 +266,26 @@ function gameHandler(io) {
 function getPlayersList(game) {
   const players = [];
   game.players.forEach((player) => {
-    players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score });
+    players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score, team: player.team || null });
   });
   return players;
+}
+
+function getTeamRankings(game) {
+  if (!game.teamMode || !game.teamCount) return null;
+  const teamScores = {};
+  game.players.forEach((player) => {
+    if (player.team) {
+      if (!teamScores[player.team]) teamScores[player.team] = 0;
+      teamScores[player.team] += player.score;
+    }
+  });
+  const teams = Object.keys(teamScores).map(function (name) {
+    return { team: name, score: teamScores[name] };
+  });
+  teams.sort(function (a, b) { return b.score - a.score; });
+  teams.forEach(function (t, i) { t.rank = i + 1; });
+  return teams;
 }
 
 function sendQuestion(io, game) {
@@ -263,7 +296,13 @@ function sendQuestion(io, game) {
     game.state = 'finished';
 
     const rankings = getRankings(game);
-    io.to(game.pin).emit('game-ended', { rankings });
+    const teamRankings = getTeamRankings(game);
+    io.to(game.pin).emit('game-ended', { rankings, teamRankings });
+
+    // Save game history to database
+    saveGameHistory(game, rankings).catch(err => {
+      console.error('Failed to save game history:', err);
+    });
 
     // Clean up timer
     if (game.timer) {
@@ -349,15 +388,19 @@ function showLeaderboardOrHalftime(io, game) {
 
   const rankings = getRankings(game);
 
+  const teamRankings = getTeamRankings(game);
+
   if (isHalftime) {
     io.to(game.pin).emit('halftime', {
       rankings: rankings.slice(0, 10),
+      teamRankings,
       questionsCompleted: game.currentQuestion + 1,
       totalQuestions: totalQ,
     });
   } else {
     io.to(game.pin).emit('leaderboard', {
       rankings: rankings.slice(0, 10),
+      teamRankings,
     });
   }
 }
@@ -378,6 +421,59 @@ function getRankings(game) {
     r.rank = i + 1;
   });
   return rankings;
+}
+
+async function saveGameHistory(game, rankings) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const sessionResult = await client.query(
+      `INSERT INTO game_sessions (host_id, quiz_id, quiz_title, pin, team_mode, team_count, started_at, ended_at, player_count)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8) RETURNING id`,
+      [game.hostId, game.quizId, game.quiz.title, game.pin,
+       game.teamMode || false, game.teamCount || 0,
+       game.startedAt || new Date(), game.players.size]
+    );
+    const sessionId = sessionResult.rows[0].id;
+
+    for (const r of rankings) {
+      const player = findPlayerByNickname(game, r.nickname);
+      const totalCorrect = player ? player.answers.filter(a => a.isCorrect).length : 0;
+      await client.query(
+        `INSERT INTO game_players (game_session_id, nickname, avatar, team_name, final_rank, final_score, total_correct, total_questions)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [sessionId, r.nickname, r.avatar || '', player?.team || null,
+         r.rank, r.score, totalCorrect, game.quiz.questions.length]
+      );
+    }
+
+    for (const [, player] of game.players) {
+      for (const ans of player.answers) {
+        const q = game.quiz.questions[ans.questionIndex];
+        await client.query(
+          `INSERT INTO player_answers (game_session_id, nickname, question_id, question_text, option_id, is_correct, score_gained)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [sessionId, player.nickname, q?.id || null, q?.question_text || '',
+           ans.optionId, ans.isCorrect, ans.scoreGained]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+function findPlayerByNickname(game, nickname) {
+  for (const [, player] of game.players) {
+    if (player.nickname === nickname) return player;
+  }
+  return null;
 }
 
 module.exports = gameHandler;

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZapQuiz - สถิติ Quiz</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <nav class="top-nav">
+    <div class="top-nav__left">
+      <a href="/" class="top-nav__logo">ZapQuiz</a>
+    </div>
+    <div class="top-nav__right">
+      <a href="/dashboard.html" class="btn btn--outline btn--sm" data-i18n="stats.back">← กลับแดชบอร์ด</a>
+    </div>
+  </nav>
+
+  <main class="stats-container">
+    <header class="dashboard-header">
+      <h1 id="stats-title" data-i18n="stats.title">สถิติ Quiz</h1>
+    </header>
+
+    <div id="stats-empty" class="empty-state" hidden>
+      <div class="empty-state__icon">📊</div>
+      <h2 data-i18n="stats.noData">ยังไม่มีข้อมูลสถิติ</h2>
+      <p data-i18n="stats.playFirst">เริ่มเล่นเกมเพื่อดูสถิติ</p>
+    </div>
+
+    <div id="stats-content" hidden>
+      <!-- Overview cards -->
+      <div class="stats-overview">
+        <div class="stats-card">
+          <span id="stat-times-played" class="stats-card__num">0</span>
+          <span class="stats-card__label" data-i18n="stats.timesPlayed">เล่นแล้ว</span>
+          <span class="stats-card__unit" data-i18n="stats.times">ครั้ง</span>
+        </div>
+        <div class="stats-card">
+          <span id="stat-total-players" class="stats-card__num">0</span>
+          <span class="stats-card__label" data-i18n="stats.totalPlayers">ผู้เล่นทั้งหมด</span>
+          <span class="stats-card__unit" data-i18n="stats.people">คน</span>
+        </div>
+        <div class="stats-card">
+          <span id="stat-avg-score" class="stats-card__num">0</span>
+          <span class="stats-card__label" data-i18n="stats.avgScore">คะแนนเฉลี่ย</span>
+        </div>
+        <div class="stats-card">
+          <span id="stat-avg-correct" class="stats-card__num">0%</span>
+          <span class="stats-card__label" data-i18n="stats.avgCorrect">ตอบถูกเฉลี่ย</span>
+        </div>
+      </div>
+
+      <!-- Per-question difficulty -->
+      <div class="stats-section">
+        <h2 data-i18n="stats.questionDifficulty">ความยากของแต่ละคำถาม</h2>
+        <div id="stats-bar-list" class="stats-bar-list"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/stats.js"></script>
+</body>
+</html>

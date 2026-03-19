@@ -17,6 +17,7 @@
     <div class="top-nav__right">
       <span id="display-username" class="top-nav__user" data-i18n="dashboard.greeting">สวัสดี, Host</span>
       <span id="role-badge" class="role-badge" hidden></span>
+      <a href="/history.html" class="btn btn--outline btn--sm" data-i18n="dashboard.history">ประวัติเกม</a>
       <a href="/settings.html" class="btn btn--outline btn--sm" title="Settings">&#9881;</a>
       <a id="admin-link" href="/admin.html" class="btn btn--outline btn--sm" hidden>
         <span data-i18n="admin.manageUsers">จัดการสมาชิก</span>
@@ -68,14 +69,46 @@
           </div>
         </div>
         <div class="quiz-card__actions">
+          <button class="btn btn--sm btn--outline quiz-card__preview" data-i18n="dashboard.preview">ตัวอย่าง</button>
           <button class="btn btn--sm btn--outline quiz-card__edit" data-i18n="dashboard.edit">แก้ไข</button>
           <button class="btn btn--sm btn--primary quiz-card__play" data-i18n="dashboard.play">เล่น</button>
+          <button class="btn btn--sm btn--outline quiz-card__stats" data-i18n="dashboard.stats">สถิติ</button>
           <button class="btn btn--sm btn--outline quiz-card__duplicate" data-i18n="dashboard.duplicate">ทำซ้ำ</button>
           <button class="btn btn--sm btn--danger quiz-card__delete" data-i18n="dashboard.delete">ลบ</button>
         </div>
       </article>
     </template>
   </main>
+
+  <!-- Game mode modal -->
+  <div id="game-mode-modal" class="modal game-mode-modal" hidden>
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+      <h3 data-i18n="team.chooseMode">เลือกโหมดเกม</h3>
+      <div class="mode-options">
+        <div class="mode-option mode-option--selected" data-mode="individual">
+          <div class="mode-option__icon">👤</div>
+          <div class="mode-option__label" data-i18n="team.individual">เล่นเดี่ยว</div>
+        </div>
+        <div class="mode-option" data-mode="team">
+          <div class="mode-option__icon">👥</div>
+          <div class="mode-option__label" data-i18n="team.teamMode">โหมดทีม</div>
+        </div>
+      </div>
+      <div id="team-count-section" class="team-count-section" hidden>
+        <label data-i18n="team.teamCount">จำนวนทีม</label>
+        <div class="team-count-buttons">
+          <button class="team-count-btn team-count-btn--selected" data-count="2">2</button>
+          <button class="team-count-btn" data-count="3">3</button>
+          <button class="team-count-btn" data-count="4">4</button>
+        </div>
+      </div>
+      <div class="modal__actions">
+        <button id="game-mode-start" class="btn btn--primary" data-i18n="team.start">เริ่มเกม</button>
+        <button id="game-mode-cancel" class="btn btn--outline" data-i18n="team.cancel">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
 
   <script src="/js/i18n.js"></script>
   <script src="/js/dashboard.js"></script>

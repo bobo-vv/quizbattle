@@ -55,25 +55,24 @@
           card.querySelector('.quiz-card__count-num').textContent = quiz.question_count || 0;
           card.querySelector('.quiz-card__date').textContent = new Date(quiz.created_at).toLocaleDateString();
 
+          // Preview
+          card.querySelector('.quiz-card__preview').addEventListener('click', function () {
+            window.location.href = '/preview.html?id=' + quiz.id;
+          });
+
           // Edit
           card.querySelector('.quiz-card__edit').addEventListener('click', function () {
             window.location.href = '/create.html?id=' + quiz.id;
           });
 
-          // Play (host a game)
+          // Play (host a game) — open mode modal
           card.querySelector('.quiz-card__play').addEventListener('click', function () {
-            fetch('/api/games/create', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ quizId: quiz.id })
-            })
-              .then(function (res) { return res.json(); })
-              .then(function (data) {
-                if (data.pin) {
-                  window.location.href = '/host.html?pin=' + data.pin;
-                }
-              })
-              .catch(function (err) { alert('Error creating game: ' + err.message); });
+            openGameModeModal(quiz.id);
+          });
+
+          // Stats
+          card.querySelector('.quiz-card__stats').addEventListener('click', function () {
+            window.location.href = '/stats.html?id=' + quiz.id;
           });
 
           // Duplicate
@@ -159,6 +158,89 @@
   if (welcomeClose) {
     welcomeClose.addEventListener('click', function () {
       if (welcomeBanner) welcomeBanner.hidden = true;
+    });
+  }
+
+  /* ---- Game Mode Modal ---- */
+  var gameModeModal  = document.getElementById('game-mode-modal');
+  var teamCountSec   = document.getElementById('team-count-section');
+  var gameModeStart  = document.getElementById('game-mode-start');
+  var gameModeCancel = document.getElementById('game-mode-cancel');
+  var selectedMode   = 'individual';
+  var selectedTeamCount = 2;
+  var pendingQuizId  = null;
+
+  function openGameModeModal(quizId) {
+    pendingQuizId = quizId;
+    selectedMode = 'individual';
+    selectedTeamCount = 2;
+    if (gameModeModal) {
+      gameModeModal.hidden = false;
+      // Reset UI
+      gameModeModal.querySelectorAll('.mode-option').forEach(function (el) {
+        el.classList.toggle('mode-option--selected', el.dataset.mode === 'individual');
+      });
+      if (teamCountSec) teamCountSec.hidden = true;
+      gameModeModal.querySelectorAll('.team-count-btn').forEach(function (btn) {
+        btn.classList.toggle('team-count-btn--selected', btn.dataset.count === '2');
+      });
+    }
+  }
+
+  if (gameModeModal) {
+    gameModeModal.querySelectorAll('.mode-option').forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        selectedMode = opt.dataset.mode;
+        gameModeModal.querySelectorAll('.mode-option').forEach(function (o) {
+          o.classList.toggle('mode-option--selected', o === opt);
+        });
+        if (teamCountSec) teamCountSec.hidden = selectedMode !== 'team';
+      });
+    });
+
+    gameModeModal.querySelectorAll('.team-count-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectedTeamCount = parseInt(btn.dataset.count, 10);
+        gameModeModal.querySelectorAll('.team-count-btn').forEach(function (b) {
+          b.classList.toggle('team-count-btn--selected', b === btn);
+        });
+      });
+    });
+
+    gameModeModal.querySelector('.modal__backdrop').addEventListener('click', function () {
+      gameModeModal.hidden = true;
+    });
+  }
+
+  if (gameModeCancel) {
+    gameModeCancel.addEventListener('click', function () {
+      if (gameModeModal) gameModeModal.hidden = true;
+    });
+  }
+
+  if (gameModeStart) {
+    gameModeStart.addEventListener('click', function () {
+      if (!pendingQuizId) return;
+      var body = { quizId: pendingQuizId };
+      if (selectedMode === 'team') {
+        body.teamMode = true;
+        body.teamCount = selectedTeamCount;
+      }
+      fetch('/api/games/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.pin) {
+            window.location.href = '/host.html?pin=' + data.pin;
+          } else if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(function (err) { alert('Error creating game: ' + err.message); });
+      if (gameModeModal) gameModeModal.hidden = true;
     });
   }
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZapQuiz - ประวัติเกม</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <nav class="top-nav">
+    <div class="top-nav__left">
+      <a href="/" class="top-nav__logo">ZapQuiz</a>
+    </div>
+    <div class="top-nav__right">
+      <a href="/dashboard.html" class="btn btn--outline btn--sm" data-i18n="common.back">← กลับ</a>
+    </div>
+  </nav>
+
+  <main class="dashboard-container">
+    <header class="dashboard-header">
+      <h1 data-i18n="history.title">ประวัติเกม</h1>
+    </header>
+
+    <!-- List view -->
+    <section id="history-list" class="history-list">
+      <!-- Rendered by JS -->
+    </section>
+
+    <div id="history-empty" class="empty-state" hidden>
+      <div class="empty-state__icon">📋</div>
+      <h2 data-i18n="history.noGames">ยังไม่มีประวัติเกม</h2>
+      <p data-i18n="history.playFirst">เริ่มเล่นเกมเพื่อดูประวัติที่นี่</p>
+    </div>
+
+    <!-- Detail view (hidden by default) -->
+    <section id="history-detail" class="history-detail" hidden>
+      <button id="history-back" class="btn btn--outline btn--sm history-detail__back" data-i18n="history.back">← กลับ</button>
+      <div class="history-detail__header">
+        <h2 id="detail-title" class="history-detail__title"></h2>
+        <div class="history-detail__meta">
+          <span id="detail-date"></span>
+          <span id="detail-players"></span>
+          <span id="detail-pin"></span>
+        </div>
+      </div>
+
+      <h3 data-i18n="history.playerResults">ผลผู้เล่น</h3>
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="detail-players-table">
+          <thead>
+            <tr>
+              <th data-i18n="history.rank">อันดับ</th>
+              <th data-i18n="history.player">ผู้เล่น</th>
+              <th data-i18n="history.score">คะแนน</th>
+              <th data-i18n="history.correct">ถูก</th>
+            </tr>
+          </thead>
+          <tbody id="detail-players-body"></tbody>
+        </table>
+      </div>
+
+      <h3 data-i18n="history.answerDetail">รายละเอียดคำตอบ</h3>
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="detail-answers-table">
+          <thead>
+            <tr>
+              <th data-i18n="history.player">ผู้เล่น</th>
+              <th data-i18n="history.question">คำถาม</th>
+              <th data-i18n="history.result">ผลลัพธ์</th>
+              <th data-i18n="history.points">คะแนน</th>
+            </tr>
+          </thead>
+          <tbody id="detail-answers-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/history.js"></script>
+</body>
+</html>

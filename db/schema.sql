@@ -40,6 +40,43 @@ ALTER TABLE hosts ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
 ALTER TABLE hosts ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
 ALTER TABLE hosts ADD COLUMN IF NOT EXISTS accepted_terms BOOLEAN DEFAULT FALSE;
 
+-- Game history tables
+CREATE TABLE IF NOT EXISTS game_sessions (
+  id SERIAL PRIMARY KEY,
+  host_id INTEGER REFERENCES hosts(id) ON DELETE SET NULL,
+  quiz_id INTEGER REFERENCES quizzes(id) ON DELETE SET NULL,
+  quiz_title VARCHAR(200) NOT NULL,
+  pin VARCHAR(10) NOT NULL,
+  team_mode BOOLEAN DEFAULT FALSE,
+  team_count INTEGER DEFAULT 0,
+  started_at TIMESTAMP DEFAULT NOW(),
+  ended_at TIMESTAMP DEFAULT NOW(),
+  player_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS game_players (
+  id SERIAL PRIMARY KEY,
+  game_session_id INTEGER REFERENCES game_sessions(id) ON DELETE CASCADE,
+  nickname VARCHAR(50) NOT NULL,
+  avatar VARCHAR(50) DEFAULT '',
+  team_name VARCHAR(20) DEFAULT NULL,
+  final_rank INTEGER DEFAULT 0,
+  final_score INTEGER DEFAULT 0,
+  total_correct INTEGER DEFAULT 0,
+  total_questions INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS player_answers (
+  id SERIAL PRIMARY KEY,
+  game_session_id INTEGER REFERENCES game_sessions(id) ON DELETE CASCADE,
+  nickname VARCHAR(50) NOT NULL,
+  question_id INTEGER,
+  question_text TEXT NOT NULL,
+  option_id INTEGER,
+  is_correct BOOLEAN DEFAULT FALSE,
+  score_gained INTEGER DEFAULT 0
+);
+
 -- Set existing "Admin" account to admin role + approved
 UPDATE hosts SET role = 'admin', status = 'approved'
   WHERE username = 'Admin' AND (role IS NULL OR role != 'admin');

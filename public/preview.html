@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZapQuiz - ตัวอย่าง Quiz</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <nav class="top-nav">
+    <div class="top-nav__left">
+      <a href="/" class="top-nav__logo">ZapQuiz</a>
+    </div>
+    <div class="top-nav__right">
+      <a href="/dashboard.html" class="btn btn--outline btn--sm" data-i18n="preview.back">← กลับแดชบอร์ด</a>
+    </div>
+  </nav>
+
+  <main class="preview-container">
+    <header class="preview-header">
+      <h1 id="preview-title" data-i18n="preview.title">ตัวอย่าง Quiz</h1>
+    </header>
+
+    <div id="preview-empty" class="empty-state" hidden>
+      <div class="empty-state__icon">📋</div>
+      <h2>ไม่มีคำถามใน Quiz นี้</h2>
+    </div>
+
+    <div id="preview-card" class="preview-card" hidden>
+      <div id="preview-question-num" class="preview-card__question-num"></div>
+      <h2 id="preview-question-text" class="preview-card__question-text"></h2>
+      <img id="preview-image" class="preview-card__image" hidden>
+      <div class="preview-card__meta">
+        <span>⏱ <span id="preview-time"></span> <span data-i18n="preview.seconds">วินาที</span></span>
+        <span>⭐ <span id="preview-points"></span> <span data-i18n="preview.points">คะแนน</span></span>
+      </div>
+      <div id="preview-options" class="preview-options"></div>
+      <div class="preview-nav">
+        <button id="preview-prev" class="btn btn--outline btn--sm" data-i18n="preview.prev">← ก่อนหน้า</button>
+        <span id="preview-counter"></span>
+        <button id="preview-next" class="btn btn--outline btn--sm" data-i18n="preview.next">ถัดไป →</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/preview.js"></script>
+</body>
+</html>

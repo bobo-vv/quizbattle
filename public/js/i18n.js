@@ -183,6 +183,68 @@ const translations = {
     /* Welcome */
     'welcome.approvedMessage': 'ยินดีต้อนรับ! บัญชีของคุณได้รับการอนุมัติแล้ว',
 
+    /* History */
+    'history.title': 'ประวัติเกม',
+    'history.noGames': 'ยังไม่มีประวัติเกม',
+    'history.playFirst': 'เริ่มเล่นเกมเพื่อดูประวัติที่นี่',
+    'history.players': 'ผู้เล่น',
+    'history.viewDetail': 'ดูรายละเอียด',
+    'history.back': '← กลับ',
+    'history.playerResults': 'ผลผู้เล่น',
+    'history.answerDetail': 'รายละเอียดคำตอบ',
+    'history.rank': 'อันดับ',
+    'history.player': 'ผู้เล่น',
+    'history.score': 'คะแนน',
+    'history.correct': 'ถูก',
+    'history.question': 'คำถาม',
+    'history.result': 'ผลลัพธ์',
+    'history.points': 'คะแนน',
+
+    /* Dashboard extras */
+    'dashboard.history': 'ประวัติเกม',
+    'dashboard.preview': 'ตัวอย่าง',
+    'dashboard.stats': 'สถิติ',
+
+    /* Preview */
+    'preview.title': 'ตัวอย่าง Quiz',
+    'preview.question': 'คำถามที่',
+    'preview.of': 'จาก',
+    'preview.prev': '← ก่อนหน้า',
+    'preview.next': 'ถัดไป →',
+    'preview.back': '← กลับแดชบอร์ด',
+    'preview.correctAnswer': 'คำตอบที่ถูกต้อง',
+    'preview.timeLimit': 'เวลา',
+    'preview.seconds': 'วินาที',
+    'preview.points': 'คะแนน',
+
+    /* Team */
+    'team.chooseMode': 'เลือกโหมดเกม',
+    'team.individual': 'เล่นเดี่ยว',
+    'team.teamMode': 'โหมดทีม',
+    'team.teamCount': 'จำนวนทีม',
+    'team.start': 'เริ่มเกม',
+    'team.cancel': 'ยกเลิก',
+    'team.red': 'ทีมแดง',
+    'team.blue': 'ทีมน้ำเงิน',
+    'team.green': 'ทีมเขียว',
+    'team.yellow': 'ทีมเหลือง',
+    'team.teamScore': 'คะแนนทีม',
+    'team.yourTeam': 'ทีมของคุณ',
+
+    /* Stats */
+    'stats.title': 'สถิติ Quiz',
+    'stats.timesPlayed': 'เล่นแล้ว',
+    'stats.totalPlayers': 'ผู้เล่นทั้งหมด',
+    'stats.avgScore': 'คะแนนเฉลี่ย',
+    'stats.avgCorrect': 'ตอบถูกเฉลี่ย',
+    'stats.questionDifficulty': 'ความยากของแต่ละคำถาม',
+    'stats.correctRate': 'อัตราตอบถูก',
+    'stats.noData': 'ยังไม่มีข้อมูลสถิติ',
+    'stats.playFirst': 'เริ่มเล่นเกมเพื่อดูสถิติ',
+    'stats.times': 'ครั้ง',
+    'stats.people': 'คน',
+    'stats.back': '← กลับแดชบอร์ด',
+
     /* Common */
     'common.backHome': '\u2190 กลับหน้าหลัก',
     'common.back': '\u2190 กลับ',
@@ -370,6 +432,68 @@ const translations = {
 
     /* Welcome */
     'welcome.approvedMessage': 'Welcome! Your account has been approved.',
+
+    /* History */
+    'history.title': 'Game History',
+    'history.noGames': 'No game history yet',
+    'history.playFirst': 'Play a game to see history here',
+    'history.players': 'players',
+    'history.viewDetail': 'View Detail',
+    'history.back': '← Back',
+    'history.playerResults': 'Player Results',
+    'history.answerDetail': 'Answer Details',
+    'history.rank': 'Rank',
+    'history.player': 'Player',
+    'history.score': 'Score',
+    'history.correct': 'Correct',
+    'history.question': 'Question',
+    'history.result': 'Result',
+    'history.points': 'Points',
+
+    /* Dashboard extras */
+    'dashboard.history': 'History',
+    'dashboard.preview': 'Preview',
+    'dashboard.stats': 'Stats',
+
+    /* Preview */
+    'preview.title': 'Quiz Preview',
+    'preview.question': 'Question',
+    'preview.of': 'of',
+    'preview.prev': '← Previous',
+    'preview.next': 'Next →',
+    'preview.back': '← Back to Dashboard',
+    'preview.correctAnswer': 'Correct Answer',
+    'preview.timeLimit': 'Time',
+    'preview.seconds': 'seconds',
+    'preview.points': 'Points',
+
+    /* Team */
+    'team.chooseMode': 'Choose Game Mode',
+    'team.individual': 'Individual',
+    'team.teamMode': 'Team Mode',
+    'team.teamCount': 'Number of Teams',
+    'team.start': 'Start Game',
+    'team.cancel': 'Cancel',
+    'team.red': 'Red Team',
+    'team.blue': 'Blue Team',
+    'team.green': 'Green Team',
+    'team.yellow': 'Yellow Team',
+    'team.teamScore': 'Team Score',
+    'team.yourTeam': 'Your Team',
+
+    /* Stats */
+    'stats.title': 'Quiz Statistics',
+    'stats.timesPlayed': 'Times Played',
+    'stats.totalPlayers': 'Total Players',
+    'stats.avgScore': 'Average Score',
+    'stats.avgCorrect': 'Avg Correct Rate',
+    'stats.questionDifficulty': 'Question Difficulty',
+    'stats.correctRate': 'Correct Rate',
+    'stats.noData': 'No statistics yet',
+    'stats.playFirst': 'Play a game to see statistics',
+    'stats.times': 'times',
+    'stats.people': 'players',
+    'stats.back': '← Back to Dashboard',
 
     /* Common */
     'common.backHome': '\u2190 Back to Home',

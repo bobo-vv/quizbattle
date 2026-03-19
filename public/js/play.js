@@ -94,7 +94,20 @@
   socket = io();
   socket.emit('join-game', { pin: pin, nickname: nickname, avatar: avatar });
 
-  socket.on('game-joined', function () {
+  socket.on('game-joined', function (data) {
+    // Show team badge if team mode
+    if (data && data.team) {
+      var teamBadgeEl = document.getElementById('player-team-badge');
+      var teamLabels = { red: 'Red Team', blue: 'Blue Team', green: 'Green Team', yellow: 'Yellow Team' };
+      if (typeof t === 'function') {
+        teamLabels = { red: t('team.red'), blue: t('team.blue'), green: t('team.green'), yellow: t('team.yellow') };
+      }
+      if (teamBadgeEl) {
+        teamBadgeEl.textContent = teamLabels[data.team] || data.team;
+        teamBadgeEl.className = 'team-badge team-badge--' + data.team;
+        teamBadgeEl.hidden = false;
+      }
+    }
     switchState('waiting');
   });
 
