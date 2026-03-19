@@ -606,6 +606,17 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--gray-800);
 }
 
+/* Hide the fixed lang-toggle on create page — it's embedded in the topbar instead */
+.create-page > .lang-toggle { display: none !important; }
+
+/* Lang toggle inside topbar (create page) */
+.lang-toggle--topbar {
+  position: static !important;
+  flex-shrink: 0;
+  font-size: .75rem;
+  padding: .3rem .7rem;
+}
+
 .create-topbar {
   display: flex;
   align-items: center;
