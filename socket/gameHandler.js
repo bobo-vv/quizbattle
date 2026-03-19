@@ -99,7 +99,7 @@ function gameHandler(io) {
       sendQuestion(io, game);
     });
 
-    // next-question
+    // next-question: from leaderboard/halftime → next question
     socket.on('next-question', ({ pin }) => {
       const game = games.get(pin);
       if (!game) {
@@ -107,6 +107,23 @@ function gameHandler(io) {
       }
 
       sendQuestion(io, game);
+    });
+
+    // show-results: from review → show leaderboard or halftime (skip the 5s wait)
+    socket.on('show-results', ({ pin }) => {
+      const game = games.get(pin);
+      if (!game) {
+        return socket.emit('error', { message: 'Game not found' });
+      }
+      if (game.state !== 'answer_review') {
+        return; // only valid during review
+      }
+      // Clear the auto-timer
+      if (game.timer) {
+        clearTimeout(game.timer);
+        game.timer = null;
+      }
+      showLeaderboardOrHalftime(io, game);
     });
 
     // submit-answer
@@ -296,28 +313,32 @@ function triggerTimeUp(io, game) {
     wrongCount,
   });
 
-  // After 5 seconds, show leaderboard (or mid-game leaderboard at halfway)
+  // After 5 seconds, auto-show leaderboard/halftime
   game.timer = setTimeout(() => {
-    const totalQ = game.quiz.questions.length;
-    const halfwayIndex = Math.floor(totalQ / 2) - 1; // 0-based index of halfway question
-    const isHalftime = totalQ >= 4 && game.currentQuestion === halfwayIndex;
-
-    game.state = isHalftime ? 'halftime' : 'leaderboard';
-
-    const rankings = getRankings(game);
-
-    if (isHalftime) {
-      io.to(game.pin).emit('halftime', {
-        rankings: rankings.slice(0, 10),
-        questionsCompleted: game.currentQuestion + 1,
-        totalQuestions: totalQ,
-      });
-    } else {
-      io.to(game.pin).emit('leaderboard', {
-        rankings: rankings.slice(0, 10),
-      });
-    }
+    showLeaderboardOrHalftime(io, game);
   }, 5000);
+}
+
+function showLeaderboardOrHalftime(io, game) {
+  const totalQ = game.quiz.questions.length;
+  const halfwayIndex = Math.floor(totalQ / 2) - 1; // 0-based index of halfway question
+  const isHalftime = totalQ >= 4 && game.currentQuestion === halfwayIndex;
+
+  game.state = isHalftime ? 'halftime' : 'leaderboard';
+
+  const rankings = getRankings(game);
+
+  if (isHalftime) {
+    io.to(game.pin).emit('halftime', {
+      rankings: rankings.slice(0, 10),
+      questionsCompleted: game.currentQuestion + 1,
+      totalQuestions: totalQ,
+    });
+  } else {
+    io.to(game.pin).emit('leaderboard', {
+      rankings: rankings.slice(0, 10),
+    });
+  }
 }
 
 function getRankings(game) {

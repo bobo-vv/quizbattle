@@ -1,6 +1,6 @@
 /* ============================================================
    QuizBattle – Sound Effects (Web Audio API)
-   No external files needed – all synthesized in browser
+   Cute, warm, game-like sounds – no external files needed
    ============================================================ */
 var QuizSound = (function () {
   'use strict';
@@ -9,211 +9,326 @@ var QuizSound = (function () {
   var enabled = true;
   var musicGain = null;
   var sfxGain = null;
-  var currentMusic = null; // track currently playing music nodes
+  var currentMusic = null;
 
   function getCtx() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       musicGain = ctx.createGain();
-      musicGain.gain.value = 0.3;
+      musicGain.gain.value = 0.25;
       musicGain.connect(ctx.destination);
       sfxGain = ctx.createGain();
-      sfxGain.gain.value = 0.5;
+      sfxGain.gain.value = 0.4;
       sfxGain.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
   }
 
-  function playNote(freq, start, duration, type, gainNode, volume) {
+  // Rich note with harmonics + soft attack/decay (warm, cute tone)
+  function playRichNote(freq, start, duration, dest, volume, opts) {
+    var c = getCtx();
+    opts = opts || {};
+    var attack = opts.attack || 0.02;
+    var decay = opts.decay || duration * 0.6;
+    var sustain = opts.sustain || 0.6;
+    var release = opts.release || duration * 0.3;
+
+    // Fundamental
+    var osc1 = c.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.value = freq;
+
+    // Soft overtone (octave up, quieter) - adds warmth
+    var osc2 = c.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 2;
+
+    // Gentle 5th harmonic - adds sparkle
+    var osc3 = c.createOscillator();
+    osc3.type = 'sine';
+    osc3.frequency.value = freq * 3;
+
+    var g1 = c.createGain();
+    var g2 = c.createGain();
+    var g3 = c.createGain();
+
+    // ADSR envelope for fundamental
+    g1.gain.setValueAtTime(0, start);
+    g1.gain.linearRampToValueAtTime(volume, start + attack);
+    g1.gain.linearRampToValueAtTime(volume * sustain, start + attack + decay);
+    g1.gain.linearRampToValueAtTime(0.001, start + duration);
+
+    // Overtones quieter
+    g2.gain.setValueAtTime(0, start);
+    g2.gain.linearRampToValueAtTime(volume * 0.2, start + attack);
+    g2.gain.linearRampToValueAtTime(0.001, start + duration * 0.7);
+
+    g3.gain.setValueAtTime(0, start);
+    g3.gain.linearRampToValueAtTime(volume * 0.07, start + attack);
+    g3.gain.linearRampToValueAtTime(0.001, start + duration * 0.4);
+
+    // Optional vibrato for warmth
+    if (opts.vibrato) {
+      var lfo = c.createOscillator();
+      var lfoGain = c.createGain();
+      lfo.frequency.value = 5;
+      lfoGain.gain.value = freq * 0.008;
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc1.frequency);
+      lfo.start(start);
+      lfo.stop(start + duration);
+    }
+
+    osc1.connect(g1); g1.connect(dest || sfxGain);
+    osc2.connect(g2); g2.connect(dest || sfxGain);
+    osc3.connect(g3); g3.connect(dest || sfxGain);
+
+    osc1.start(start); osc1.stop(start + duration + 0.05);
+    osc2.start(start); osc2.stop(start + duration + 0.05);
+    osc3.start(start); osc3.stop(start + duration + 0.05);
+
+    return [osc1, osc2, osc3];
+  }
+
+  // Simple sparkle/twinkle effect
+  function sparkle(start, dest, volume) {
+    var c = getCtx();
+    var freqs = [2093, 2637, 3136, 2349, 2793];
+    for (var i = 0; i < freqs.length; i++) {
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freqs[i];
+      g.gain.setValueAtTime(0, start + i * 0.06);
+      g.gain.linearRampToValueAtTime((volume || 0.06) * (1 - i * 0.15), start + i * 0.06 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, start + i * 0.06 + 0.15);
+      osc.connect(g);
+      g.connect(dest || sfxGain);
+      osc.start(start + i * 0.06);
+      osc.stop(start + i * 0.06 + 0.2);
+    }
+  }
+
+  // Cute "boop" sound
+  function boop(freq, start, dest, volume) {
     var c = getCtx();
     var osc = c.createOscillator();
     var g = c.createGain();
-    osc.type = type || 'sine';
-    osc.frequency.value = freq;
-    g.gain.setValueAtTime(volume || 0.3, start);
-    g.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * 1.3, start);
+    osc.frequency.exponentialRampToValueAtTime(freq, start + 0.08);
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(volume || 0.2, start + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
     osc.connect(g);
-    g.connect(gainNode || sfxGain);
+    g.connect(dest || sfxGain);
     osc.start(start);
-    osc.stop(start + duration);
+    osc.stop(start + 0.25);
     return osc;
-  }
-
-  function playNoise(start, duration, gainNode, volume) {
-    var c = getCtx();
-    var bufferSize = c.sampleRate * duration;
-    var buffer = c.createBuffer(1, bufferSize, c.sampleRate);
-    var data = buffer.getChannelData(0);
-    for (var i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    var source = c.createBufferSource();
-    source.buffer = buffer;
-    var g = c.createGain();
-    g.gain.setValueAtTime(volume || 0.1, start);
-    g.gain.exponentialRampToValueAtTime(0.001, start + duration);
-    source.connect(g);
-    g.connect(gainNode || sfxGain);
-    source.start(start);
-    source.stop(start + duration);
   }
 
   /* ---- Sound Effects ---- */
 
-  // Player joined - short cheerful ding
+  // Player joined - cute "pop-ding!" like a bubble
   function playerJoined() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    playNote(880, now, 0.15, 'sine', sfxGain, 0.25);
-    playNote(1108, now + 0.1, 0.2, 'sine', sfxGain, 0.2);
+    boop(880, now, sfxGain, 0.2);
+    playRichNote(1319, now + 0.08, 0.25, sfxGain, 0.18);
+    sparkle(now + 0.15, sfxGain, 0.03);
   }
 
-  // Correct answer - ascending happy chime
+  // Correct answer - happy ascending xylophone chime ✨
   function correct() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    playNote(523, now, 0.15, 'sine', sfxGain, 0.3);
-    playNote(659, now + 0.1, 0.15, 'sine', sfxGain, 0.3);
-    playNote(784, now + 0.2, 0.15, 'sine', sfxGain, 0.3);
-    playNote(1047, now + 0.3, 0.4, 'sine', sfxGain, 0.35);
+    var notes = [
+      { f: 659, t: 0, d: 0.18 },    // E5
+      { f: 784, t: 0.1, d: 0.18 },   // G5
+      { f: 988, t: 0.2, d: 0.18 },   // B5
+      { f: 1319, t: 0.3, d: 0.4 },   // E6 (hold)
+    ];
+    notes.forEach(function (n) {
+      playRichNote(n.f, now + n.t, n.d, sfxGain, 0.22);
+    });
+    sparkle(now + 0.4, sfxGain, 0.05);
   }
 
-  // Wrong answer - descending buzz
+  // Wrong answer - cute sad descending "wah-wah" (not harsh)
   function wrong() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    playNote(350, now, 0.2, 'sawtooth', sfxGain, 0.15);
-    playNote(280, now + 0.15, 0.3, 'sawtooth', sfxGain, 0.12);
+    // Descending minor 2nds with vibrato - sounds sad but cute
+    playRichNote(494, now, 0.25, sfxGain, 0.15, { vibrato: true });      // B4
+    playRichNote(466, now + 0.2, 0.25, sfxGain, 0.13, { vibrato: true }); // Bb4
+    playRichNote(440, now + 0.4, 0.35, sfxGain, 0.1, { vibrato: true });  // A4
   }
 
-  // Time's up - dramatic reveal
+  // Time's up - cute alarm clock "ding-ding-ding!"
   function timeUp() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    playNote(600, now, 0.1, 'square', sfxGain, 0.15);
-    playNote(500, now + 0.1, 0.1, 'square', sfxGain, 0.15);
-    playNote(400, now + 0.2, 0.1, 'square', sfxGain, 0.15);
-    playNoise(now + 0.3, 0.3, sfxGain, 0.15);
-    playNote(700, now + 0.5, 0.5, 'sine', sfxGain, 0.25);
+    // Three bell rings
+    for (var i = 0; i < 3; i++) {
+      playRichNote(1047, now + i * 0.15, 0.12, sfxGain, 0.2);
+      playRichNote(1568, now + i * 0.15, 0.12, sfxGain, 0.08); // overtone
+    }
+    // Resolution note
+    playRichNote(784, now + 0.5, 0.4, sfxGain, 0.18, { vibrato: true });
   }
 
-  // Leaderboard reveal - fanfare
+  // Leaderboard reveal - cheerful fanfare 🎺
   function leaderboard() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    // Trumpet-like fanfare
-    playNote(523, now, 0.2, 'square', sfxGain, 0.15);
-    playNote(523, now + 0.2, 0.1, 'square', sfxGain, 0.12);
-    playNote(523, now + 0.35, 0.1, 'square', sfxGain, 0.12);
-    playNote(659, now + 0.5, 0.2, 'square', sfxGain, 0.15);
-    playNote(784, now + 0.75, 0.4, 'square', sfxGain, 0.18);
-    playNote(659, now + 1.1, 0.15, 'sine', sfxGain, 0.1);
-    playNote(784, now + 1.3, 0.5, 'sine', sfxGain, 0.15);
+    var melody = [
+      { f: 523, t: 0, d: 0.15 },     // C5
+      { f: 659, t: 0.12, d: 0.15 },   // E5
+      { f: 784, t: 0.24, d: 0.15 },   // G5
+      { f: 1047, t: 0.38, d: 0.35 },  // C6 (hold)
+      { f: 988, t: 0.65, d: 0.12 },   // B5
+      { f: 1047, t: 0.8, d: 0.45 },   // C6 (final)
+    ];
+    melody.forEach(function (n) {
+      playRichNote(n.f, now + n.t, n.d, sfxGain, 0.2);
+    });
+    sparkle(now + 0.9, sfxGain, 0.04);
   }
 
-  // Mid-game leaderboard - special dramatic fanfare
+  // Mid-game leaderboard - exciting halftime jingle ⭐
   function halftime() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    // Dramatic build-up
-    playNote(392, now, 0.15, 'square', sfxGain, 0.15);
-    playNote(440, now + 0.15, 0.15, 'square', sfxGain, 0.15);
-    playNote(523, now + 0.3, 0.15, 'square', sfxGain, 0.18);
-    playNote(659, now + 0.45, 0.15, 'square', sfxGain, 0.18);
-    playNote(784, now + 0.6, 0.3, 'sine', sfxGain, 0.25);
-    playNote(1047, now + 0.9, 0.5, 'sine', sfxGain, 0.3);
-    // Sparkle
-    playNote(1568, now + 1.2, 0.15, 'sine', sfxGain, 0.1);
-    playNote(2093, now + 1.35, 0.2, 'sine', sfxGain, 0.08);
+    // Build-up scale
+    var buildup = [392, 440, 494, 523, 587, 659, 784, 1047];
+    buildup.forEach(function (f, i) {
+      playRichNote(f, now + i * 0.08, 0.12, sfxGain, 0.12 + i * 0.012);
+    });
+    // Big finish chord
+    playRichNote(1047, now + 0.7, 0.5, sfxGain, 0.25, { vibrato: true });
+    playRichNote(1319, now + 0.7, 0.5, sfxGain, 0.15, { vibrato: true });
+    playRichNote(1568, now + 0.7, 0.5, sfxGain, 0.1, { vibrato: true });
+    // Sparkle cascade
+    sparkle(now + 1.0, sfxGain, 0.06);
+    sparkle(now + 1.3, sfxGain, 0.04);
   }
 
-  // Victory / podium - celebratory melody
+  // Victory / podium - celebration melody 🎉
   function victory() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    var notes = [523, 587, 659, 784, 1047, 784, 1047];
-    var durations = [0.15, 0.15, 0.15, 0.15, 0.3, 0.15, 0.5];
-    var time = now;
-    for (var i = 0; i < notes.length; i++) {
-      playNote(notes[i], time, durations[i] + 0.05, 'sine', sfxGain, 0.25);
-      playNote(notes[i] * 1.5, time, durations[i] + 0.03, 'sine', sfxGain, 0.1);
-      time += durations[i];
-    }
-    // Sparkle cascade
-    playNote(2093, time, 0.2, 'sine', sfxGain, 0.08);
-    playNote(2349, time + 0.1, 0.2, 'sine', sfxGain, 0.06);
-    playNote(2637, time + 0.2, 0.3, 'sine', sfxGain, 0.05);
+    // Cheerful melody (like Mario star)
+    var melody = [
+      { f: 784, t: 0, d: 0.15 },     // G5
+      { f: 988, t: 0.12, d: 0.15 },   // B5
+      { f: 1175, t: 0.24, d: 0.15 },  // D6
+      { f: 1568, t: 0.38, d: 0.12 },  // G6
+      { f: 1319, t: 0.5, d: 0.12 },   // E6
+      { f: 1568, t: 0.62, d: 0.15 },  // G6
+      { f: 2093, t: 0.78, d: 0.55 },  // C7 (big finish)
+    ];
+    melody.forEach(function (n) {
+      playRichNote(n.f, now + n.t, n.d, sfxGain, 0.2);
+    });
+    // Harmony on the big finish
+    playRichNote(1568, now + 0.78, 0.55, sfxGain, 0.12, { vibrato: true });
+    playRichNote(1047, now + 0.78, 0.55, sfxGain, 0.08, { vibrato: true });
+    // Triple sparkle
+    sparkle(now + 1.0, sfxGain, 0.06);
+    sparkle(now + 1.2, sfxGain, 0.05);
+    sparkle(now + 1.4, sfxGain, 0.04);
   }
 
-  // Game start - exciting countdown sound
+  // Game start - exciting "let's go!" jingle
   function gameStart() {
     if (!enabled) return;
     var c = getCtx();
     var now = c.currentTime;
-    playNote(440, now, 0.2, 'square', sfxGain, 0.15);
-    playNote(554, now + 0.25, 0.2, 'square', sfxGain, 0.15);
-    playNote(659, now + 0.5, 0.2, 'square', sfxGain, 0.18);
-    playNote(880, now + 0.75, 0.5, 'sine', sfxGain, 0.25);
+    playRichNote(523, now, 0.15, sfxGain, 0.2);         // C5
+    playRichNote(659, now + 0.15, 0.15, sfxGain, 0.2);  // E5
+    playRichNote(784, now + 0.3, 0.15, sfxGain, 0.22);  // G5
+    playRichNote(1047, now + 0.48, 0.4, sfxGain, 0.25); // C6
+    sparkle(now + 0.6, sfxGain, 0.04);
   }
 
-  /* ---- Background Music (looping) ---- */
+  /* ---- Background Music ---- */
 
   function stopMusic() {
     if (currentMusic) {
       try {
-        currentMusic.forEach(function (node) { node.stop(); });
+        currentMusic.forEach(function (node) {
+          if (node && node.stop) node.stop();
+        });
       } catch (e) { /* ignore */ }
       currentMusic = null;
     }
   }
 
-  // Lobby music - upbeat repeating loop
+  // Lobby music - cute bouncy loop (like a music box)
   function lobbyMusic() {
     if (!enabled) return;
     stopMusic();
     var c = getCtx();
     var nodes = [];
-
-    var melody = [
-      { f: 523, d: 0.25 }, { f: 659, d: 0.25 }, { f: 784, d: 0.25 }, { f: 659, d: 0.25 },
-      { f: 587, d: 0.25 }, { f: 740, d: 0.25 }, { f: 880, d: 0.25 }, { f: 740, d: 0.25 },
-      { f: 523, d: 0.25 }, { f: 784, d: 0.25 }, { f: 1047, d: 0.5 },
-      { f: 880, d: 0.25 }, { f: 784, d: 0.25 }, { f: 659, d: 0.5 },
-    ];
-
-    var bass = [
-      { f: 131, d: 1 }, { f: 147, d: 1 }, { f: 131, d: 1 }, { f: 165, d: 1 },
-    ];
-
-    var loopDuration = 4; // seconds per loop
-    var totalDuration = 120; // max 2 minutes
     var now = c.currentTime;
 
-    for (var loop = 0; loop < totalDuration / loopDuration; loop++) {
+    // Pentatonic melody (always sounds happy & cute)
+    var melodyPattern = [
+      { f: 784, d: 0.3 },   // G5
+      { f: 880, d: 0.3 },   // A5
+      { f: 1047, d: 0.3 },  // C6
+      { f: 880, d: 0.3 },   // A5
+      { f: 1175, d: 0.3 },  // D6
+      { f: 1047, d: 0.3 },  // C6
+      { f: 880, d: 0.3 },   // A5
+      { f: 784, d: 0.3 },   // G5
+      { f: 659, d: 0.3 },   // E5
+      { f: 784, d: 0.3 },   // G5
+      { f: 880, d: 0.6 },   // A5 (hold)
+      { f: 0, d: 0.3 },     // rest
+    ];
+
+    var bassPattern = [
+      { f: 196, d: 0.6 },  // G3
+      { f: 220, d: 0.6 },  // A3
+      { f: 262, d: 0.6 },  // C4
+      { f: 196, d: 0.6 },  // G3
+      { f: 175, d: 0.6 },  // F3
+      { f: 196, d: 0.6 },  // G3
+    ];
+
+    var loopDuration = 0;
+    melodyPattern.forEach(function (n) { loopDuration += n.d; });
+
+    var totalDuration = 180; // 3 minutes max
+
+    for (var loop = 0; loop < Math.ceil(totalDuration / loopDuration); loop++) {
       var loopStart = now + loop * loopDuration;
 
-      // Melody
-      var melodyTime = loopStart;
-      for (var i = 0; i < melody.length; i++) {
-        var osc = playNote(melody[i].f, melodyTime, melody[i].d * 0.9, 'sine', musicGain, 0.15);
-        nodes.push(osc);
-        melodyTime += melody[i].d;
+      // Melody (music box sound)
+      var t = loopStart;
+      for (var i = 0; i < melodyPattern.length; i++) {
+        if (melodyPattern[i].f > 0) {
+          var oscs = playRichNote(melodyPattern[i].f, t, melodyPattern[i].d * 0.85, musicGain, 0.1);
+          oscs.forEach(function (o) { nodes.push(o); });
+        }
+        t += melodyPattern[i].d;
       }
 
-      // Bass
-      var bassTime = loopStart;
-      for (var j = 0; j < bass.length; j++) {
-        var bassOsc = playNote(bass[j].f, bassTime, bass[j].d * 0.9, 'triangle', musicGain, 0.2);
-        nodes.push(bassOsc);
-        bassTime += bass[j].d;
+      // Bass (soft pads)
+      var bt = loopStart;
+      for (var j = 0; j < bassPattern.length; j++) {
+        var bassOscs = playRichNote(bassPattern[j].f, bt, bassPattern[j].d * 0.9, musicGain, 0.08, { vibrato: true });
+        bassOscs.forEach(function (o) { nodes.push(o); });
+        bt += bassPattern[j].d;
       }
     }
 
@@ -221,7 +336,7 @@ var QuizSound = (function () {
     return { stop: stopMusic };
   }
 
-  // Countdown/thinking music - ticking tension
+  // Countdown music - playful ticking with rising tension
   function countdownMusic(seconds) {
     if (!enabled) return { stop: function () {} };
     stopMusic();
@@ -229,36 +344,54 @@ var QuizSound = (function () {
     var nodes = [];
     var now = c.currentTime;
 
+    // Cute tick-tock (alternating high-low)
     for (var i = 0; i < seconds; i++) {
       var time = now + i;
-      var pitch = 800;
-      // Last 5 seconds get higher pitch and faster
+      var isEven = i % 2 === 0;
+      var basePitch = isEven ? 660 : 550;
+
+      // Raise pitch in last 5 seconds
       if (i >= seconds - 5) {
-        pitch = 800 + (i - (seconds - 5)) * 100;
-        // Double tick in last 5 sec
-        var osc2 = playNote(pitch, time + 0.5, 0.08, 'sine', musicGain, 0.12);
-        nodes.push(osc2);
+        basePitch += (i - (seconds - 5)) * 60;
       }
-      // Last 3 seconds - even more urgent
+      // Extra urgency in last 3 seconds
       if (i >= seconds - 3) {
-        pitch += 200;
+        basePitch += 100;
+        // Double-tick
+        boop(basePitch + 100, time + 0.5, musicGain, 0.08);
       }
-      var osc = playNote(pitch, time, 0.08, 'sine', musicGain, 0.15);
-      nodes.push(osc);
+
+      var tickOsc = boop(basePitch, time, musicGain, 0.1);
+      nodes.push(tickOsc);
     }
 
-    // Background tension drone
-    var drone = c.createOscillator();
-    var droneGain = c.createGain();
-    drone.type = 'sine';
-    drone.frequency.value = 110;
-    droneGain.gain.setValueAtTime(0.05, now);
-    droneGain.gain.linearRampToValueAtTime(0.15, now + seconds);
-    drone.connect(droneGain);
-    droneGain.connect(musicGain);
-    drone.start(now);
-    drone.stop(now + seconds);
-    nodes.push(drone);
+    // Warm background pad (not scary drone)
+    var pad = c.createOscillator();
+    var padGain = c.createGain();
+    pad.type = 'sine';
+    pad.frequency.value = 220;
+    padGain.gain.setValueAtTime(0.02, now);
+    padGain.gain.linearRampToValueAtTime(0.06, now + seconds * 0.7);
+    padGain.gain.linearRampToValueAtTime(0.02, now + seconds);
+    pad.connect(padGain);
+    padGain.connect(musicGain);
+    pad.start(now);
+    pad.stop(now + seconds + 0.1);
+    nodes.push(pad);
+
+    // Add gentle harmony pad
+    var pad2 = c.createOscillator();
+    var pad2Gain = c.createGain();
+    pad2.type = 'sine';
+    pad2.frequency.value = 330;
+    pad2Gain.gain.setValueAtTime(0.01, now);
+    pad2Gain.gain.linearRampToValueAtTime(0.03, now + seconds * 0.7);
+    pad2Gain.gain.linearRampToValueAtTime(0.01, now + seconds);
+    pad2.connect(pad2Gain);
+    pad2Gain.connect(musicGain);
+    pad2.start(now);
+    pad2.stop(now + seconds + 0.1);
+    nodes.push(pad2);
 
     currentMusic = nodes;
     return { stop: stopMusic };

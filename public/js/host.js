@@ -347,7 +347,8 @@
 
   if (nextBtn) {
     nextBtn.addEventListener('click', function () {
-      if (socket) socket.emit('next-question', { pin: pin });
+      // From review → show leaderboard/halftime (not skip to next question)
+      if (socket) socket.emit('show-results', { pin: pin });
     });
   }
 
