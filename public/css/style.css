@@ -2203,6 +2203,9 @@ button { cursor: pointer; border: none; background: none; }
   justify-content: center;
   animation: fadeIn .2s ease;
 }
+.modal[hidden] {
+  display: none;
+}
 .modal__backdrop {
   position: absolute;
   inset: 0;
