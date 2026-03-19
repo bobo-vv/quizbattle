@@ -1635,6 +1635,76 @@ button { cursor: pointer; border: none; background: none; }
 /* ============================================================
    12. Print (hide game elements)
    ============================================================ */
+/* ============================================================
+   13. Import Preview
+   ============================================================ */
+.import-divider {
+  border: none;
+  border-top: 1px solid var(--gray-200);
+  margin: .75rem 0;
+}
+
+.import-preview {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-top: .75rem;
+  box-shadow: var(--shadow-sm);
+  max-height: 400px;
+  overflow-y: auto;
+}
+.import-preview h3 {
+  font-size: .95rem;
+  color: var(--purple-dark);
+  margin-bottom: .5rem;
+}
+.import-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+}
+.import-preview th {
+  background: var(--purple-dark);
+  color: var(--white);
+  padding: .4rem .5rem;
+  text-align: left;
+  font-weight: 700;
+}
+.import-preview td {
+  padding: .4rem .5rem;
+  border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-800);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.import-preview__count {
+  font-weight: 800;
+  font-size: .9rem;
+  margin-bottom: .5rem;
+  color: var(--purple-mid);
+}
+.import-preview__actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.question-list-panel .btn--secondary,
+.question-list-panel .btn--outline {
+  margin-top: .5rem;
+}
+.question-list-panel .btn--outline {
+  color: var(--gray-800);
+  border-color: var(--gray-200);
+}
+.question-list-panel .btn--outline:hover {
+  background: var(--off-white);
+  border-color: var(--purple-mid);
+  color: var(--purple-mid);
+}
+
 @media print {
   .lang-toggle,
   .confetti-area,

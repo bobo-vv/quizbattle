@@ -59,6 +59,14 @@ const translations = {
     'create.true': 'ถูก (True)',
     'create.false': 'ผิด (False)',
     'create.deleteQuestion': 'ลบคำถามนี้',
+    'create.importExcel': 'Import จาก Excel',
+    'create.downloadTemplate': 'Download Template',
+    'create.importPreview': 'ตัวอย่างคำถามที่จะ Import',
+    'create.importFound': 'พบ {0} คำถาม',
+    'create.importAll': 'Import ทั้งหมด',
+    'create.importCancel': 'ยกเลิก',
+    'create.importSuccess': 'Import สำเร็จ {0} คำถาม',
+    'create.importError': 'ไม่สามารถอ่านไฟล์ได้',
 
     /* Host */
     'host.gamePin': 'Game PIN:',
@@ -163,6 +171,14 @@ const translations = {
     'create.true': 'True',
     'create.false': 'False',
     'create.deleteQuestion': 'Delete this question',
+    'create.importExcel': 'Import from Excel',
+    'create.downloadTemplate': 'Download Template',
+    'create.importPreview': 'Questions to Import',
+    'create.importFound': 'Found {0} questions',
+    'create.importAll': 'Import All',
+    'create.importCancel': 'Cancel',
+    'create.importSuccess': 'Successfully imported {0} questions',
+    'create.importError': 'Could not read file',
 
     /* Host */
     'host.gamePin': 'Game PIN:',

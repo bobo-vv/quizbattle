@@ -35,6 +35,11 @@
           <!-- Populated by JS -->
         </ul>
         <button id="add-question-btn" class="btn btn--primary btn--full" data-i18n="create.addQuestion">+ เพิ่มคำถาม</button>
+        <hr class="import-divider">
+        <button id="import-btn" class="btn btn--secondary btn--full" data-i18n="create.importExcel">Import จาก Excel</button>
+        <button id="download-template-btn" class="btn btn--outline btn--full" data-i18n="create.downloadTemplate">Download Template</button>
+        <input type="file" id="import-file" accept=".xlsx,.xls,.csv" hidden>
+        <div id="import-preview" class="import-preview" hidden></div>
       </aside>
 
       <!-- Question editor panel -->
@@ -148,6 +153,7 @@
   </main>
 
   <script src="/js/i18n.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="/js/create.js"></script>
 </body>
 </html>

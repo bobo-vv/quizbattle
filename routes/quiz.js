@@ -355,4 +355,70 @@ router.put('/:id/questions/reorder', async (req, res) => {
   }
 });
 
+// POST /:id/import - bulk import questions
+router.post('/:id/import', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Verify quiz belongs to host
+    const quizResult = await client.query(
+      'SELECT id FROM quizzes WHERE id = $1 AND host_id = $2',
+      [req.params.id, req.session.hostId]
+    );
+    if (quizResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+
+    const { questions } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'questions array is required' });
+    }
+
+    // Get current max sort_order
+    const maxOrderResult = await client.query(
+      'SELECT COALESCE(MAX(sort_order), -1) AS max_order FROM questions WHERE quiz_id = $1',
+      [req.params.id]
+    );
+    var nextOrder = maxOrderResult.rows[0].max_order + 1;
+
+    var created = [];
+    for (const q of questions) {
+      const questionResult = await client.query(
+        'INSERT INTO questions (quiz_id, type, question_text, image_url, time_limit, points, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [req.params.id, q.type || 'multiple-choice', q.question_text, q.image_url || '', q.time_limit || 20, q.points || 1000, nextOrder]
+      );
+      const question = questionResult.rows[0];
+      question.options = [];
+
+      if (q.options && Array.isArray(q.options)) {
+        for (const opt of q.options) {
+          const optResult = await client.query(
+            'INSERT INTO options (question_id, option_text, is_correct, sort_order) VALUES ($1, $2, $3, $4) RETURNING *',
+            [question.id, opt.option_text, opt.is_correct || false, opt.sort_order || 0]
+          );
+          question.options.push(optResult.rows[0]);
+        }
+      }
+
+      created.push(question);
+      nextOrder++;
+    }
+
+    // Update quiz updated_at
+    await client.query('UPDATE quizzes SET updated_at = NOW() WHERE id = $1', [req.params.id]);
+
+    await client.query('COMMIT');
+    res.status(201).json(created);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Import questions error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;

@@ -385,6 +385,220 @@
       });
   }
 
+  /* ---- import: DOM refs ---- */
+  var importBtn         = document.getElementById('import-btn');
+  var downloadTemplBtn  = document.getElementById('download-template-btn');
+  var importFileInput   = document.getElementById('import-file');
+  var importPreviewEl   = document.getElementById('import-preview');
+
+  /* ---- import: download template ---- */
+  downloadTemplBtn.addEventListener('click', function () {
+    var headers = [
+      '\u0E04\u0E33\u0E16\u0E32\u0E21 (Question)',
+      '\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17 (Type)',
+      '\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01 A (Option A)',
+      '\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01 B (Option B)',
+      '\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01 C (Option C)',
+      '\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01 D (Option D)',
+      '\u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E17\u0E35\u0E48\u0E16\u0E39\u0E01 (Correct Answer)',
+      '\u0E40\u0E27\u0E25\u0E32 (Time Limit)',
+      '\u0E04\u0E30\u0E41\u0E19\u0E19 (Points)'
+    ];
+
+    var rows = [
+      headers,
+      ['1+1 \u0E40\u0E17\u0E48\u0E32\u0E01\u0E31\u0E1A\u0E40\u0E17\u0E48\u0E32\u0E44\u0E2B\u0E23\u0E48?', 'mc', '1', '2', '3', '4', 'B', 20, 1000],
+      ['\u0E42\u0E25\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E14\u0E32\u0E27\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C\u0E14\u0E27\u0E07\u0E17\u0E35\u0E48 3 \u0E08\u0E32\u0E01\u0E14\u0E27\u0E07\u0E2D\u0E32\u0E17\u0E34\u0E15\u0E22\u0E4C', 'tf', '', '', '', '', 'true', 15, 1000],
+      ['\u0E2A\u0E35\u0E02\u0E2D\u0E07\u0E17\u0E49\u0E2D\u0E07\u0E1F\u0E49\u0E32\u0E04\u0E37\u0E2D\u0E2A\u0E35\u0E2D\u0E30\u0E44\u0E23?', 'mc', '\u0E41\u0E14\u0E07', '\u0E40\u0E02\u0E35\u0E22\u0E27', '\u0E19\u0E49\u0E33\u0E40\u0E07\u0E34\u0E19', '\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E07', 'C', 20, 1000]
+    ];
+
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+      { wch: 40 }, { wch: 10 }, { wch: 15 }, { wch: 15 },
+      { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 12 }
+    ];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'quizbattle_template.xlsx');
+  });
+
+  /* ---- import: trigger file input ---- */
+  importBtn.addEventListener('click', function () {
+    importFileInput.value = '';
+    importFileInput.click();
+  });
+
+  /* ---- import: parse file ---- */
+  var parsedImportQuestions = [];
+
+  importFileInput.addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      try {
+        var data = new Uint8Array(evt.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var sheet = workbook.Sheets[workbook.SheetNames[0]];
+        var json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        // Skip header row
+        parsedImportQuestions = [];
+        for (var r = 1; r < json.length; r++) {
+          var row = json[r];
+          if (!row || !row[0]) continue;
+
+          var qText = String(row[0] || '').trim();
+          var qType = String(row[1] || 'mc').trim().toLowerCase();
+          var optA = String(row[2] || '');
+          var optB = String(row[3] || '');
+          var optC = String(row[4] || '');
+          var optD = String(row[5] || '');
+          var correct = String(row[6] || '').trim();
+          var timeLimit = parseInt(row[7], 10) || 20;
+          var points = parseInt(row[8], 10) || 1000;
+
+          var type = qType === 'tf' ? 'true-false' : 'multiple-choice';
+          var options = [];
+
+          if (type === 'true-false') {
+            var isTrue = correct.toLowerCase() === 'true';
+            options = [
+              { option_text: 'True', is_correct: isTrue, sort_order: 0 },
+              { option_text: 'False', is_correct: !isTrue, sort_order: 1 }
+            ];
+          } else {
+            var answerMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+            var correctIdx = answerMap[correct.toUpperCase()];
+            if (correctIdx === undefined) correctIdx = 0;
+            var optTexts = [optA, optB, optC, optD];
+            for (var oi = 0; oi < 4; oi++) {
+              options.push({
+                option_text: optTexts[oi],
+                is_correct: oi === correctIdx,
+                sort_order: oi
+              });
+            }
+          }
+
+          parsedImportQuestions.push({
+            question_text: qText,
+            type: type,
+            time_limit: timeLimit,
+            points: points,
+            options: options,
+            _correctLabel: correct
+          });
+        }
+
+        showImportPreview();
+      } catch (err) {
+        showToast(t('create.importError'), 'error');
+        console.error('Import parse error:', err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  /* ---- import: show preview ---- */
+  function showImportPreview() {
+    if (parsedImportQuestions.length === 0) {
+      importPreviewEl.hidden = true;
+      return;
+    }
+
+    var html = '<h3>' + t('create.importPreview') + '</h3>';
+    html += '<p class="import-preview__count">' + t('create.importFound').replace('{0}', parsedImportQuestions.length) + '</p>';
+    html += '<table><thead><tr><th>#</th><th>' + t('create.questionText') + '</th><th>' + t('create.questionType') + '</th><th>' + t('create.correct') + '</th></tr></thead><tbody>';
+
+    for (var i = 0; i < parsedImportQuestions.length; i++) {
+      var q = parsedImportQuestions[i];
+      var typeLabel = q.type === 'true-false' ? t('create.trueFalse') : t('create.multipleChoice');
+      html += '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(q.question_text) + '</td><td>' + typeLabel + '</td><td>' + escapeHtml(q._correctLabel) + '</td></tr>';
+    }
+
+    html += '</tbody></table>';
+    html += '<div class="import-preview__actions">';
+    html += '<button id="confirm-import-btn" class="btn btn--primary btn--full">' + t('create.importAll') + '</button>';
+    html += '<button id="cancel-import-btn" class="btn btn--outline btn--full">' + t('create.importCancel') + '</button>';
+    html += '</div>';
+
+    importPreviewEl.innerHTML = html;
+    importPreviewEl.hidden = false;
+
+    document.getElementById('confirm-import-btn').addEventListener('click', doImport);
+    document.getElementById('cancel-import-btn').addEventListener('click', function () {
+      importPreviewEl.hidden = true;
+      parsedImportQuestions = [];
+    });
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  /* ---- import: confirm import ---- */
+  function doImport() {
+    var confirmBtn = document.getElementById('confirm-import-btn');
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    var ensureQuiz;
+    if (quizId) {
+      ensureQuiz = Promise.resolve();
+    } else {
+      // Create quiz first
+      var title = quizTitleInput.value.trim() || 'Untitled Quiz';
+      var description = quizDescInput.value.trim();
+      ensureQuiz = fetch('/api/quizzes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, description: description })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          quizId = data.id;
+          window.history.replaceState(null, '', '/create.html?id=' + quizId);
+        });
+    }
+
+    ensureQuiz
+      .then(function () {
+        // Build payload without _correctLabel
+        var payload = parsedImportQuestions.map(function (q) {
+          return {
+            question_text: q.question_text,
+            type: q.type,
+            time_limit: q.time_limit,
+            points: q.points,
+            options: q.options
+          };
+        });
+
+        return fetch('/api/quizzes/' + quizId + '/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questions: payload })
+        });
+      })
+      .then(function (res) { return res.json(); })
+      .then(function (created) {
+        if (Array.isArray(created)) {
+          showToast(t('create.importSuccess').replace('{0}', created.length), 'success');
+        }
+        importPreviewEl.hidden = true;
+        parsedImportQuestions = [];
+        // Reload quiz to show all questions
+        return loadQuiz(quizId);
+      })
+      .catch(function (err) {
+        showToast('Error: ' + (err.message || 'Import failed'), 'error');
+        if (confirmBtn) confirmBtn.disabled = false;
+      });
+  }
+
   /* ---- init ---- */
   checkAuth().then(function (ok) {
     if (!ok) return;
