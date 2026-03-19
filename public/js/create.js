@@ -304,9 +304,14 @@
         });
     }
 
-    // Step 2: AFTER quiz is saved, save all questions sequentially
+    // Step 2: AFTER quiz is saved, sync current form data to array, then save all
     saveMetaPromise
       .then(function () {
+        // Sync current question's DOM form data back into the questions array
+        if (selectedIndex >= 0 && selectedIndex < questions.length) {
+          var formData = gatherQuestionData();
+          Object.assign(questions[selectedIndex], formData);
+        }
         return saveAllQuestions();
       })
       .then(function () {
