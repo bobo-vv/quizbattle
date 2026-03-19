@@ -97,6 +97,25 @@
     </div>
   </section>
 
+  <!-- ========== HALFTIME STATE ========== -->
+  <section id="state-halftime" class="play-state">
+    <div class="play-halftime">
+      <div class="halftime-banner halftime-banner--player">
+        <div class="halftime-banner__icon">&#9734;</div>
+        <h2 class="halftime-banner__title" data-i18n="play.halftime">HALF-TIME!</h2>
+      </div>
+      <div class="play-leaderboard__rank-box">
+        <span class="play-leaderboard__rank-label" data-i18n="play.yourRankNow">อันดับตอนนี้</span>
+        <span id="halftime-rank" class="play-leaderboard__rank-num">-</span>
+      </div>
+      <div class="play-leaderboard__score-box">
+        <span class="play-leaderboard__score-label" data-i18n="play.totalScore">คะแนนรวม</span>
+        <span id="halftime-score" class="play-leaderboard__score-num">0</span>
+      </div>
+      <p class="halftime-encouragement" data-i18n="play.halftimeMsg">สู้ต่อไป! ยังเหลืออีกครึ่ง!</p>
+    </div>
+  </section>
+
   <!-- ========== LEADERBOARD STATE ========== -->
   <section id="state-leaderboard" class="play-state">
     <div class="play-leaderboard">
@@ -132,8 +151,12 @@
     </div>
   </section>
 
+  <!-- Sound toggle button -->
+  <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">&#128266;</button>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/i18n.js"></script>
+  <script src="/js/sound.js"></script>
   <script src="/js/play.js"></script>
 </body>
 </html>

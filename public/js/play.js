@@ -20,6 +20,7 @@
   var stateQuestion    = document.getElementById('state-question');
   var stateAnswered    = document.getElementById('state-answered');
   var stateResult      = document.getElementById('state-result');
+  var stateHalftime    = document.getElementById('state-halftime');
   var stateLeaderboard = document.getElementById('state-leaderboard');
   var stateFinal       = document.getElementById('state-final');
 
@@ -45,11 +46,15 @@
   var finalTop3Msg     = document.getElementById('final-top3-msg');
   var finalCelebration = document.getElementById('final-celebration');
 
+  var halftimeRankEl   = document.getElementById('halftime-rank');
+  var halftimeScoreEl  = document.getElementById('halftime-score');
+  var soundToggleBtn   = document.getElementById('sound-toggle');
+
   /* ---- helpers ---- */
 
   function switchState(newState) {
     currentState = newState;
-    [stateWaiting, stateQuestion, stateAnswered, stateResult, stateLeaderboard, stateFinal].forEach(function (el) {
+    [stateWaiting, stateQuestion, stateAnswered, stateResult, stateHalftime, stateLeaderboard, stateFinal].forEach(function (el) {
       if (el) el.classList.remove('play-state--active');
     });
     var map = {
@@ -57,6 +62,7 @@
       question: stateQuestion,
       answered: stateAnswered,
       result: stateResult,
+      halftime: stateHalftime,
       leaderboard: stateLeaderboard,
       final: stateFinal
     };
@@ -96,7 +102,7 @@
   });
 
   socket.on('game-started', function () {
-    // waiting for first question
+    QuizSound.gameStart();
   });
 
   // Backend sends flat data: { questionIndex, totalQuestions, id, type, question_text, image_url, time_limit, points, options }
@@ -144,6 +150,7 @@
     }
 
     startLocalTimer(data.time_limit || 20);
+    QuizSound.countdownMusic(data.time_limit || 20);
     switchState('question');
   });
 
@@ -175,6 +182,7 @@
 
   function submitAnswer(optionId, btn) {
     clearInterval(timerInterval);
+    QuizSound.stopMusic();
 
     // Disable all answer buttons
     if (mcAnswersEl) mcAnswersEl.querySelectorAll('.play-answer').forEach(function (b) { b.disabled = true; });
@@ -194,6 +202,11 @@
 
   /* ---- answer result ---- */
   socket.on('answer-result', function (data) {
+    if (data.isCorrect) {
+      QuizSound.correct();
+    } else {
+      QuizSound.wrong();
+    }
     if (data.isCorrect) {
       if (resultIconEl) {
         resultIconEl.textContent = '\u2714';
@@ -224,6 +237,8 @@
   /* ---- time up (no answer submitted) ---- */
   socket.on('time-up', function () {
     clearInterval(timerInterval);
+    QuizSound.stopMusic();
+    QuizSound.timeUp();
     if (currentState === 'question') {
       // Player didn't answer in time
       if (resultIconEl) {
@@ -241,8 +256,19 @@
     }
   });
 
+  /* ---- halftime ---- */
+  socket.on('halftime', function (data) {
+    QuizSound.halftime();
+    var rankings = data.rankings || [];
+    var me = rankings.find(function (r) { return r.nickname === nickname; });
+    if (halftimeRankEl) halftimeRankEl.textContent = me ? '#' + me.rank : '-';
+    if (halftimeScoreEl) halftimeScoreEl.textContent = me ? me.score : '0';
+    switchState('halftime');
+  });
+
   /* ---- leaderboard ---- */
   socket.on('leaderboard', function (data) {
+    QuizSound.leaderboard();
     var rankings = data.rankings || [];
     var me = rankings.find(function (r) { return r.nickname === nickname; });
     if (playRankEl) playRankEl.textContent = me ? '#' + me.rank : '-';
@@ -252,6 +278,8 @@
 
   /* ---- game ended ---- */
   socket.on('game-ended', function (data) {
+    QuizSound.stopMusic();
+    QuizSound.victory();
     var rankings = data.rankings || [];
     var me = rankings.find(function (r) { return r.nickname === nickname; });
 
@@ -292,5 +320,14 @@
   socket.on('error', function (data) {
     alert(data.message || data.error || 'Error');
   });
+
+  /* ---- sound toggle ---- */
+  if (soundToggleBtn) {
+    soundToggleBtn.addEventListener('click', function () {
+      var on = QuizSound.toggle();
+      soundToggleBtn.textContent = on ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+      soundToggleBtn.classList.toggle('sound-toggle--muted', !on);
+    });
+  }
 
 })();

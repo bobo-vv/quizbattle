@@ -16,6 +16,7 @@
   var stateLobby       = document.getElementById('state-lobby');
   var stateQuestion    = document.getElementById('state-question');
   var stateReview      = document.getElementById('state-review');
+  var stateHalftime    = document.getElementById('state-halftime');
   var stateLeaderboard = document.getElementById('state-leaderboard');
   var stateFinal       = document.getElementById('state-final');
 
@@ -39,19 +40,25 @@
   var leaderboardList  = document.getElementById('leaderboard-list');
   var leaderboardNext  = document.getElementById('leaderboard-next-btn');
 
+  var halftimeList     = document.getElementById('halftime-list');
+  var halftimeProgress = document.getElementById('halftime-progress');
+  var halftimeNextBtn  = document.getElementById('halftime-next-btn');
+
   var backDashboardBtn = document.getElementById('back-dashboard-btn');
+  var soundToggleBtn   = document.getElementById('sound-toggle');
 
   /* ---- helpers ---- */
 
   function switchState(newState) {
     state = newState;
-    [stateLobby, stateQuestion, stateReview, stateLeaderboard, stateFinal].forEach(function (el) {
+    [stateLobby, stateQuestion, stateReview, stateHalftime, stateLeaderboard, stateFinal].forEach(function (el) {
       if (el) el.classList.remove('host-state--active');
     });
     var map = {
       lobby: stateLobby,
       question: stateQuestion,
       review: stateReview,
+      halftime: stateHalftime,
       leaderboard: stateLeaderboard,
       final: stateFinal
     };
@@ -94,11 +101,13 @@
     /* -- Host joined confirmation -- */
     socket.on('host-joined', function (data) {
       renderPlayers(data.players || []);
+      QuizSound.lobbyMusic();
     });
 
     /* -- Player events -- */
     socket.on('player-joined', function (data) {
       renderPlayers(data.players || []);
+      QuizSound.playerJoined();
     });
 
     socket.on('player-left', function (data) {
@@ -107,7 +116,8 @@
 
     /* -- Game events -- */
     socket.on('game-started', function () {
-      // Wait for first question
+      QuizSound.stopMusic();
+      QuizSound.gameStart();
     });
 
     // Backend sends flat data: { questionIndex, totalQuestions, id, type, question_text, image_url, time_limit, points, options }
@@ -142,6 +152,7 @@
 
       if (answerCountNum) answerCountNum.textContent = '0';
       startCountdown(data.time_limit || 20);
+      QuizSound.countdownMusic(data.time_limit || 20);
       switchState('question');
     });
 
@@ -153,15 +164,26 @@
 
     socket.on('time-up', function (data) {
       clearInterval(timerInterval);
+      QuizSound.stopMusic();
+      QuizSound.timeUp();
       showReview(data.correctOptionId, data.correctCount || 0, data.wrongCount || 0);
     });
 
+    socket.on('halftime', function (data) {
+      QuizSound.halftime();
+      renderHalftime(data.rankings, data.questionsCompleted, data.totalQuestions);
+      switchState('halftime');
+    });
+
     socket.on('leaderboard', function (data) {
+      QuizSound.leaderboard();
       renderLeaderboard(data.rankings);
       switchState('leaderboard');
     });
 
     socket.on('game-ended', function (data) {
+      QuizSound.stopMusic();
+      QuizSound.victory();
       renderPodium(data.rankings);
       switchState('final');
       spawnConfetti();
@@ -230,6 +252,31 @@
     if (wrongCountEl) wrongCountEl.textContent = wrongCount;
 
     switchState('review');
+  }
+
+  /* ---- render halftime leaderboard ---- */
+  function renderHalftime(rankings, completed, total) {
+    if (halftimeProgress) {
+      halftimeProgress.textContent = completed + ' / ' + total;
+    }
+    if (!halftimeList) return;
+    halftimeList.innerHTML = '';
+    var top = (rankings || []).slice(0, 5);
+    var maxScore = top.length > 0 ? top[0].score : 1;
+
+    top.forEach(function (entry, idx) {
+      var li = document.createElement('li');
+      li.className = 'leaderboard-item halftime-item';
+      li.style.animationDelay = (idx * 0.15) + 's';
+      li.innerHTML =
+        '<span class="leaderboard-item__rank">#' + entry.rank + '</span>' +
+        '<span class="leaderboard-item__name">' + escapeHtml(entry.nickname) + '</span>' +
+        '<div class="leaderboard-item__bar-wrap">' +
+          '<div class="leaderboard-item__bar" style="width:' + Math.max(10, (entry.score / Math.max(maxScore, 1)) * 100) + '%"></div>' +
+        '</div>' +
+        '<span class="leaderboard-item__score">' + entry.score + '</span>';
+      halftimeList.appendChild(li);
+    });
   }
 
   /* ---- render leaderboard ---- */
@@ -310,9 +357,23 @@
     });
   }
 
+  if (halftimeNextBtn) {
+    halftimeNextBtn.addEventListener('click', function () {
+      if (socket) socket.emit('next-question', { pin: pin });
+    });
+  }
+
   if (backDashboardBtn) {
     backDashboardBtn.addEventListener('click', function () {
       window.location.href = '/dashboard.html';
+    });
+  }
+
+  if (soundToggleBtn) {
+    soundToggleBtn.addEventListener('click', function () {
+      var on = QuizSound.toggle();
+      soundToggleBtn.textContent = on ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+      soundToggleBtn.classList.toggle('sound-toggle--muted', !on);
     });
   }
 

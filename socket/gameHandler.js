@@ -296,14 +296,27 @@ function triggerTimeUp(io, game) {
     wrongCount,
   });
 
-  // After 5 seconds, show leaderboard
+  // After 5 seconds, show leaderboard (or mid-game leaderboard at halfway)
   game.timer = setTimeout(() => {
-    game.state = 'leaderboard';
+    const totalQ = game.quiz.questions.length;
+    const halfwayIndex = Math.floor(totalQ / 2) - 1; // 0-based index of halfway question
+    const isHalftime = totalQ >= 4 && game.currentQuestion === halfwayIndex;
+
+    game.state = isHalftime ? 'halftime' : 'leaderboard';
 
     const rankings = getRankings(game);
-    io.to(game.pin).emit('leaderboard', {
-      rankings: rankings.slice(0, 10),
-    });
+
+    if (isHalftime) {
+      io.to(game.pin).emit('halftime', {
+        rankings: rankings.slice(0, 10),
+        questionsCompleted: game.currentQuestion + 1,
+        totalQuestions: totalQ,
+      });
+    } else {
+      io.to(game.pin).emit('leaderboard', {
+        rankings: rankings.slice(0, 10),
+      });
+    }
   }, 5000);
 }
 

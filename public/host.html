@@ -117,6 +117,19 @@
     </div>
   </section>
 
+  <!-- ========== HALFTIME LEADERBOARD STATE ========== -->
+  <section id="state-halftime" class="host-state">
+    <div class="host-halftime">
+      <div class="halftime-banner">
+        <div class="halftime-banner__icon">&#9734;</div>
+        <h2 class="halftime-banner__title" data-i18n="host.halftime">HALF-TIME!</h2>
+        <p id="halftime-progress" class="halftime-banner__subtitle"></p>
+      </div>
+      <ol id="halftime-list" class="leaderboard-list"></ol>
+      <button id="halftime-next-btn" class="btn btn--primary btn--lg" data-i18n="host.continueGame">ไปต่อเลย!</button>
+    </div>
+  </section>
+
   <!-- ========== LEADERBOARD STATE ========== -->
   <section id="state-leaderboard" class="host-state">
     <div class="host-leaderboard">
@@ -157,8 +170,12 @@
     </div>
   </section>
 
+  <!-- Sound toggle button -->
+  <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">&#128266;</button>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/i18n.js"></script>
+  <script src="/js/sound.js"></script>
   <script src="/js/host.js"></script>
 </body>
 </html>
