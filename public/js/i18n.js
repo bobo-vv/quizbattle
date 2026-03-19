@@ -7,7 +7,7 @@ const translations = {
     'landing.subtitle': 'สนุกกับการเรียนรู้แบบ Real-time!',
     'landing.joinGame': 'เข้าร่วมเกม',
     'landing.hostLogin': 'เข้าสู่ระบบ (Host)',
-    'landing.footer': 'ZapQuiz \u00a9 2026 - Powered by Learning & Fun',
+    'landing.footer': 'ZapQuiz \u00a9 2026 - Powered by Moonwave Labs',
 
     /* Auth */
     'auth.hostAccess': 'เข้าสู่ระบบสำหรับ Host',
@@ -257,7 +257,7 @@ const translations = {
     'landing.subtitle': 'Learn and have fun in Real-time!',
     'landing.joinGame': 'Join Game',
     'landing.hostLogin': 'Sign In (Host)',
-    'landing.footer': 'ZapQuiz \u00a9 2026 - Powered by Learning & Fun',
+    'landing.footer': 'ZapQuiz \u00a9 2026 - Powered by Moonwave Labs',
 
     /* Auth */
     'auth.hostAccess': 'Sign in as Host',
