@@ -1581,6 +1581,20 @@ button { cursor: pointer; border: none; background: none; }
    11. Responsive
    ============================================================ */
 @media (max-width: 768px) {
+  .lang-toggle {
+    top: auto;
+    bottom: 1rem;
+    left: 1rem;
+    right: auto;
+    z-index: 900;
+    font-size: .75rem;
+    padding: .3rem .8rem;
+    opacity: .7;
+  }
+  .lang-toggle:hover,
+  .lang-toggle:active {
+    opacity: 1;
+  }
   .create-layout {
     grid-template-columns: 1fr;
   }
