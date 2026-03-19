@@ -390,7 +390,7 @@
     var qr = qrcode(0, 'M');
     qr.addData(url);
     qr.make();
-    qrContainer.innerHTML = qr.createImgTag(4, 8);
+    qrContainer.innerHTML = qr.createImgTag(8, 16);
   }
 
   /* ---- escape HTML ---- */

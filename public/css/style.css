@@ -2362,15 +2362,18 @@ button { cursor: pointer; border: none; background: none; }
    21. QR Code (Host Lobby)
    ============================================================ */
 .lobby__qr {
-  margin-top: 1rem;
-  text-align: center;
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
 .lobby__qr img {
   border-radius: var(--radius-md);
   background: var(--white);
-  padding: 8px;
-  box-shadow: var(--shadow-md);
-  max-width: 180px;
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
+  width: 280px;
+  height: 280px;
+  image-rendering: pixelated;
 }
 
 /* ============================================================
