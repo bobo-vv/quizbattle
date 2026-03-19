@@ -350,8 +350,9 @@
       teamColors.forEach(function (color) {
         var col = document.createElement('div');
         col.className = 'team-column team-column--' + color;
-        col.innerHTML = '<div class="team-column__title">' + (TEAM_EMOJI[color] || '') + ' ' + getTeamLabel(color) + '</div>';
         var teamPlayers = (players || []).filter(function (p) { return p.team === color; });
+        col.innerHTML = '<div class="team-column__title">' + (TEAM_EMOJI[color] || '') + ' ' + getTeamLabel(color) +
+          ' <span class="team-column__count">(' + teamPlayers.length + ')</span></div>';
         teamPlayers.forEach(function (p) {
           var div = document.createElement('div');
           div.className = 'team-column__player';
