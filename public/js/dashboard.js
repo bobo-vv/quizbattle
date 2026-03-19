@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Dashboard
+   ZapQuiz – Dashboard
    ============================================================ */
 (function () {
   'use strict';
@@ -149,7 +149,7 @@
 
   /* ---- Welcome banner ---- */
   function checkWelcome(user) {
-    var key = 'quizbattle_welcomed_' + user.username;
+    var key = 'zapquiz_welcomed_' + user.username;
     if (localStorage.getItem(key)) return;
     if (user.status === 'approved') {
       if (welcomeBanner) welcomeBanner.hidden = false;

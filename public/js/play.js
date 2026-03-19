@@ -1,13 +1,13 @@
 /* ============================================================
-   QuizBattle – Player Game Screen
+   ZapQuiz – Player Game Screen
    ============================================================ */
 (function () {
   'use strict';
 
   /* ---- state ---- */
-  var pin           = sessionStorage.getItem('quizbattle_pin');
-  var nickname      = sessionStorage.getItem('quizbattle_nickname');
-  var avatar        = sessionStorage.getItem('quizbattle_avatar') || '🐱';
+  var pin           = sessionStorage.getItem('zapquiz_pin');
+  var nickname      = sessionStorage.getItem('zapquiz_nickname');
+  var avatar        = sessionStorage.getItem('zapquiz_avatar') || '🐱';
   var socket        = null;
   var currentState  = 'waiting';
   var currentQId    = null;

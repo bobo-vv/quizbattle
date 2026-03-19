@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – i18n (Thai / English)
+   ZapQuiz – i18n (Thai / English)
    ============================================================ */
 const translations = {
   th: {
@@ -7,7 +7,7 @@ const translations = {
     'landing.subtitle': 'สนุกกับการเรียนรู้แบบ Real-time!',
     'landing.joinGame': 'เข้าร่วมเกม',
     'landing.hostLogin': 'เข้าสู่ระบบ (Host)',
-    'landing.footer': 'QuizBattle \u00a9 2026 - Powered by Learning & Fun',
+    'landing.footer': 'ZapQuiz \u00a9 2026 - Powered by Learning & Fun',
 
     /* Auth */
     'auth.hostAccess': 'เข้าสู่ระบบสำหรับ Host',
@@ -195,7 +195,7 @@ const translations = {
     'landing.subtitle': 'Learn and have fun in Real-time!',
     'landing.joinGame': 'Join Game',
     'landing.hostLogin': 'Sign In (Host)',
-    'landing.footer': 'QuizBattle \u00a9 2026 - Powered by Learning & Fun',
+    'landing.footer': 'ZapQuiz \u00a9 2026 - Powered by Learning & Fun',
 
     /* Auth */
     'auth.hostAccess': 'Sign in as Host',
@@ -382,11 +382,11 @@ const translations = {
 /* ---- helpers ---- */
 
 function getCurrentLang() {
-  return localStorage.getItem('quizbattle_lang') || 'th';
+  return localStorage.getItem('zapquiz_lang') || 'th';
 }
 
 function setLang(lang) {
-  localStorage.setItem('quizbattle_lang', lang);
+  localStorage.setItem('zapquiz_lang', lang);
   applyTranslations();
 }
 

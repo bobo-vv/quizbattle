@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Account Settings
+   ZapQuiz – Account Settings
    ============================================================ */
 (function () {
   'use strict';

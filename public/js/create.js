@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Create / Edit Quiz
+   ZapQuiz – Create / Edit Quiz
    ============================================================ */
 (function () {
   'use strict';
@@ -419,7 +419,7 @@
     ];
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'quizbattle_template.xlsx');
+    XLSX.writeFile(wb, 'zapquiz_template.xlsx');
   });
 
   /* ---- import: trigger file input ---- */

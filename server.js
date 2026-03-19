@@ -34,7 +34,7 @@ const sessionMiddleware = session({
     tableName: 'session',
     createTableIfMissing: true,
   }),
-  secret: process.env.SESSION_SECRET || 'quizbattle-secret-key',
+  secret: process.env.SESSION_SECRET || 'zapquiz-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {

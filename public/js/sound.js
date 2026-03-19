@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Sound Effects (Web Audio API)
+   ZapQuiz – Sound Effects (Web Audio API)
    Exciting & Cute – thrilling but adorable game sounds
    ============================================================ */
 var QuizSound = (function () {

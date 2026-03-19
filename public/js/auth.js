@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Auth (Login / Register)
+   ZapQuiz – Auth (Login / Register)
    ============================================================ */
 (function () {
   'use strict';

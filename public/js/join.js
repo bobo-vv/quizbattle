@@ -1,5 +1,5 @@
 /* ============================================================
-   QuizBattle – Join Game
+   ZapQuiz – Join Game
    Uses REST API to validate PIN, then redirects to play.html
    where the actual socket connection happens (only once).
    ============================================================ */
@@ -60,9 +60,9 @@
         }
 
         // Store for play page - socket join happens there
-        sessionStorage.setItem('quizbattle_pin', data.pin);
-        sessionStorage.setItem('quizbattle_nickname', data.nickname);
-        sessionStorage.setItem('quizbattle_avatar', selectedAvatar);
+        sessionStorage.setItem('zapquiz_pin', data.pin);
+        sessionStorage.setItem('zapquiz_nickname', data.nickname);
+        sessionStorage.setItem('zapquiz_avatar', selectedAvatar);
         window.location.href = '/play.html';
       })
       .catch(function (err) {

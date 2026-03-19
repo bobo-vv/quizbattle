@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: quizbattle
+    name: zapquiz
     runtime: node
     plan: free
     buildCommand: npm install
@@ -12,9 +12,9 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: quizbattle-db
+          name: zapquiz-db
           property: connectionString
 
 databases:
-  - name: quizbattle-db
+  - name: zapquiz-db
     plan: free

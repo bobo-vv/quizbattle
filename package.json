@@ -1,7 +1,7 @@
 {
-  "name": "quizbattle",
+  "name": "zapquiz",
   "version": "1.0.0",
-  "description": "QuizBattle - real-time quiz game",
+  "description": "ZapQuiz - real-time quiz game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
