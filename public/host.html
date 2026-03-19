@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - Host Game</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="host-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <!-- ========== LOBBY STATE ========== -->
+  <section id="state-lobby" class="host-state host-state--active">
+    <div class="lobby">
+      <h1 class="lobby__brand">QuizBattle</h1>
+      <div class="lobby__pin-box">
+        <p class="lobby__pin-label" data-i18n="host.gamePin">Game PIN:</p>
+        <p id="game-pin" class="lobby__pin">------</p>
+      </div>
+      <div class="lobby__players">
+        <h2 data-i18n="host.playersJoined">ผู้เล่นที่เข้าร่วม</h2>
+        <ul id="player-list" class="lobby__player-list">
+          <!-- Players added by JS with animation -->
+        </ul>
+        <p id="player-count" class="lobby__player-count">
+          <span id="player-count-num">0</span> <span data-i18n="host.players">ผู้เล่น</span>
+        </p>
+      </div>
+      <button id="start-game-btn" class="btn btn--primary btn--xl" data-i18n="host.startGame">เริ่มเกม</button>
+    </div>
+  </section>
+
+  <!-- ========== QUESTION STATE ========== -->
+  <section id="state-question" class="host-state">
+    <div class="host-question">
+      <div class="host-question__header">
+        <span id="question-number" class="host-question__number"></span>
+        <div id="countdown-timer" class="countdown-timer">
+          <svg class="countdown-timer__svg" viewBox="0 0 120 120">
+            <circle class="countdown-timer__bg" cx="60" cy="60" r="54"></circle>
+            <circle id="countdown-circle" class="countdown-timer__progress" cx="60" cy="60" r="54"></circle>
+          </svg>
+          <span id="countdown-text" class="countdown-timer__text">20</span>
+        </div>
+      </div>
+
+      <div class="host-question__body">
+        <h2 id="question-text" class="host-question__text"></h2>
+        <img id="question-image" class="host-question__image" hidden alt="">
+      </div>
+
+      <div id="answer-blocks" class="answer-blocks">
+        <div class="answer-block answer-block--red">
+          <span class="answer-block__shape">&#9650;</span>
+          <span id="answer-0" class="answer-block__text"></span>
+        </div>
+        <div class="answer-block answer-block--blue">
+          <span class="answer-block__shape">&#9679;</span>
+          <span id="answer-1" class="answer-block__text"></span>
+        </div>
+        <div class="answer-block answer-block--yellow">
+          <span class="answer-block__shape">&#9670;</span>
+          <span id="answer-2" class="answer-block__text"></span>
+        </div>
+        <div class="answer-block answer-block--green">
+          <span class="answer-block__shape">&#9632;</span>
+          <span id="answer-3" class="answer-block__text"></span>
+        </div>
+      </div>
+
+      <div class="host-question__footer">
+        <span id="answer-count" class="host-question__answer-count">
+          <span id="answer-count-num">0</span> <span data-i18n="host.answered">ตอบแล้ว</span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ANSWER REVIEW STATE ========== -->
+  <section id="state-review" class="host-state">
+    <div class="host-review">
+      <h2 id="review-question" class="host-review__question"></h2>
+      <div id="review-answers" class="answer-blocks">
+        <div class="answer-block answer-block--red">
+          <span class="answer-block__shape">&#9650;</span>
+          <span id="review-answer-0" class="answer-block__text"></span>
+          <span id="review-count-0" class="answer-block__count"></span>
+        </div>
+        <div class="answer-block answer-block--blue">
+          <span class="answer-block__shape">&#9679;</span>
+          <span id="review-answer-1" class="answer-block__text"></span>
+          <span id="review-count-1" class="answer-block__count"></span>
+        </div>
+        <div class="answer-block answer-block--yellow">
+          <span class="answer-block__shape">&#9670;</span>
+          <span id="review-answer-2" class="answer-block__text"></span>
+          <span id="review-count-2" class="answer-block__count"></span>
+        </div>
+        <div class="answer-block answer-block--green">
+          <span class="answer-block__shape">&#9632;</span>
+          <span id="review-answer-3" class="answer-block__text"></span>
+          <span id="review-count-3" class="answer-block__count"></span>
+        </div>
+      </div>
+      <div class="host-review__stats">
+        <div class="host-review__stat">
+          <span id="correct-count" class="host-review__stat-num">0</span>
+          <span data-i18n="host.correct">ถูก</span>
+        </div>
+        <div class="host-review__stat">
+          <span id="wrong-count" class="host-review__stat-num">0</span>
+          <span data-i18n="host.wrong">ผิด</span>
+        </div>
+      </div>
+      <button id="next-btn" class="btn btn--primary btn--lg" data-i18n="host.next">ถัดไป</button>
+    </div>
+  </section>
+
+  <!-- ========== LEADERBOARD STATE ========== -->
+  <section id="state-leaderboard" class="host-state">
+    <div class="host-leaderboard">
+      <h2 data-i18n="host.leaderboard">อันดับคะแนน</h2>
+      <ol id="leaderboard-list" class="leaderboard-list">
+        <!-- Top 5 players rendered by JS -->
+      </ol>
+      <button id="leaderboard-next-btn" class="btn btn--primary btn--lg" data-i18n="host.next">ถัดไป</button>
+    </div>
+  </section>
+
+  <!-- ========== FINAL / PODIUM STATE ========== -->
+  <section id="state-final" class="host-state">
+    <div class="host-final">
+      <h2 data-i18n="host.finalResults">ผลการแข่งขัน</h2>
+      <div class="podium">
+        <div class="podium__place podium__place--2">
+          <div class="podium__avatar" id="podium-2-avatar"></div>
+          <p id="podium-2-name" class="podium__name">-</p>
+          <p id="podium-2-score" class="podium__score">0</p>
+          <div class="podium__bar podium__bar--2">2</div>
+        </div>
+        <div class="podium__place podium__place--1">
+          <div class="podium__avatar" id="podium-1-avatar"></div>
+          <p id="podium-1-name" class="podium__name">-</p>
+          <p id="podium-1-score" class="podium__score">0</p>
+          <div class="podium__bar podium__bar--1">1</div>
+        </div>
+        <div class="podium__place podium__place--3">
+          <div class="podium__avatar" id="podium-3-avatar"></div>
+          <p id="podium-3-name" class="podium__name">-</p>
+          <p id="podium-3-score" class="podium__score">0</p>
+          <div class="podium__bar podium__bar--3">3</div>
+        </div>
+      </div>
+      <div id="confetti-area" class="confetti-area"></div>
+      <button id="back-dashboard-btn" class="btn btn--secondary btn--lg" data-i18n="host.backDashboard">กลับแดชบอร์ด</button>
+    </div>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/host.js"></script>
+</body>
+</html>

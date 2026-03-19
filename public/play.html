@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - เล่นเกม</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="play-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <!-- ========== WAITING STATE ========== -->
+  <section id="state-waiting" class="play-state play-state--active">
+    <div class="play-waiting">
+      <h1 class="play-waiting__logo">QuizBattle</h1>
+      <div class="play-waiting__spinner"></div>
+      <p class="play-waiting__text" data-i18n="play.waiting">กำลังรอ Host เริ่มเกม...</p>
+      <p id="player-nickname" class="play-waiting__nickname"></p>
+    </div>
+  </section>
+
+  <!-- ========== QUESTION STATE ========== -->
+  <section id="state-question" class="play-state">
+    <div class="play-question">
+      <div class="play-question__header">
+        <span id="play-question-number" class="play-question__number"></span>
+        <div id="play-countdown" class="play-countdown">
+          <span id="play-countdown-text">20</span>
+        </div>
+      </div>
+
+      <h2 id="play-question-text" class="play-question__text"></h2>
+
+      <!-- Multiple Choice answers -->
+      <div id="play-mc-answers" class="play-answers">
+        <button class="play-answer play-answer--red" data-answer="0">
+          <span class="play-answer__shape">&#9650;</span>
+          <span id="play-answer-0" class="play-answer__text"></span>
+        </button>
+        <button class="play-answer play-answer--blue" data-answer="1">
+          <span class="play-answer__shape">&#9679;</span>
+          <span id="play-answer-1" class="play-answer__text"></span>
+        </button>
+        <button class="play-answer play-answer--yellow" data-answer="2">
+          <span class="play-answer__shape">&#9670;</span>
+          <span id="play-answer-2" class="play-answer__text"></span>
+        </button>
+        <button class="play-answer play-answer--green" data-answer="3">
+          <span class="play-answer__shape">&#9632;</span>
+          <span id="play-answer-3" class="play-answer__text"></span>
+        </button>
+      </div>
+
+      <!-- True/False answers -->
+      <div id="play-tf-answers" class="play-answers play-answers--tf" hidden>
+        <button class="play-answer play-answer--blue play-answer--half" data-answer="true">
+          <span class="play-answer__shape">&#9679;</span>
+          <span class="play-answer__text" data-i18n="play.true">ถูก (True)</span>
+        </button>
+        <button class="play-answer play-answer--red play-answer--half" data-answer="false">
+          <span class="play-answer__shape">&#9650;</span>
+          <span class="play-answer__text" data-i18n="play.false">ผิด (False)</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ANSWERED STATE ========== -->
+  <section id="state-answered" class="play-state">
+    <div class="play-answered">
+      <div class="play-answered__icon">&#10003;</div>
+      <p class="play-answered__text" data-i18n="play.submitted">ส่งคำตอบแล้ว!</p>
+      <p class="play-answered__wait" data-i18n="play.waitForResults">รอดูผลลัพธ์...</p>
+    </div>
+  </section>
+
+  <!-- ========== RESULT STATE ========== -->
+  <section id="state-result" class="play-state">
+    <div class="play-result">
+      <div id="result-icon" class="play-result__icon"></div>
+      <h2 id="result-text" class="play-result__text"></h2>
+      <div class="play-result__details">
+        <div class="play-result__detail">
+          <span class="play-result__label" data-i18n="play.pointsEarned">คะแนนที่ได้</span>
+          <span id="result-points" class="play-result__value">0</span>
+        </div>
+        <div class="play-result__detail">
+          <span class="play-result__label" data-i18n="play.totalScore">คะแนนรวม</span>
+          <span id="result-total" class="play-result__value">0</span>
+        </div>
+        <div class="play-result__detail">
+          <span class="play-result__label" data-i18n="play.streak">ตอบถูกติดต่อกัน</span>
+          <span id="result-streak" class="play-result__value play-result__value--streak">0 &#128293;</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== LEADERBOARD STATE ========== -->
+  <section id="state-leaderboard" class="play-state">
+    <div class="play-leaderboard">
+      <h2 data-i18n="play.yourRank">อันดับของคุณ</h2>
+      <div class="play-leaderboard__rank-box">
+        <span class="play-leaderboard__rank-label" data-i18n="play.rank">อันดับ</span>
+        <span id="play-rank" class="play-leaderboard__rank-num">-</span>
+      </div>
+      <div class="play-leaderboard__score-box">
+        <span class="play-leaderboard__score-label" data-i18n="play.totalScore">คะแนนรวม</span>
+        <span id="play-score" class="play-leaderboard__score-num">0</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FINAL STATE ========== -->
+  <section id="state-final" class="play-state">
+    <div class="play-final">
+      <div id="final-celebration" class="play-final__celebration" hidden>
+        <div class="confetti-area"></div>
+      </div>
+      <h2 data-i18n="play.gameOver">จบเกม!</h2>
+      <div class="play-final__result">
+        <p class="play-final__rank-label" data-i18n="play.finalRank">อันดับสุดท้าย</p>
+        <p id="final-rank" class="play-final__rank">-</p>
+        <p class="play-final__score-label" data-i18n="play.finalScore">คะแนนรวม</p>
+        <p id="final-score" class="play-final__score">0</p>
+      </div>
+      <div id="final-top3-msg" class="play-final__top3" hidden>
+        <p data-i18n="play.congratsTop3">ยินดีด้วย! คุณติด Top 3!</p>
+      </div>
+      <a href="/" class="btn btn--primary btn--lg" data-i18n="play.playAgain">เล่นอีกครั้ง</a>
+    </div>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/play.js"></script>
+</body>
+</html>

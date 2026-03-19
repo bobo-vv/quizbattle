@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - เข้าสู่ระบบ</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <main class="auth-container">
+    <a href="/" class="auth-back" data-i18n="common.backHome">&larr; กลับหน้าหลัก</a>
+
+    <div class="auth-card">
+      <h1 class="auth-logo">QuizBattle</h1>
+      <p class="auth-subtitle" data-i18n="auth.hostAccess">เข้าสู่ระบบสำหรับ Host</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab auth-tab--active" data-tab="login" data-i18n="auth.loginTab">เข้าสู่ระบบ</button>
+        <button class="auth-tab" data-tab="register" data-i18n="auth.registerTab">สมัครสมาชิก</button>
+      </div>
+
+      <form id="login-form" class="auth-form auth-form--active" data-form="login">
+        <div class="form-group">
+          <label for="login-username" data-i18n="auth.username">ชื่อผู้ใช้</label>
+          <input type="text" id="login-username" name="username" required autocomplete="username"
+                 placeholder="ชื่อผู้ใช้" data-i18n-placeholder="auth.username">
+        </div>
+        <div class="form-group">
+          <label for="login-password" data-i18n="auth.password">รหัสผ่าน</label>
+          <input type="password" id="login-password" name="password" required autocomplete="current-password"
+                 placeholder="รหัสผ่าน" data-i18n-placeholder="auth.password">
+        </div>
+        <button type="submit" class="btn btn--primary btn--full" data-i18n="auth.loginBtn">เข้าสู่ระบบ</button>
+      </form>
+
+      <form id="register-form" class="auth-form" data-form="register">
+        <div class="form-group">
+          <label for="reg-username" data-i18n="auth.username">ชื่อผู้ใช้</label>
+          <input type="text" id="reg-username" name="username" required autocomplete="username"
+                 placeholder="ชื่อผู้ใช้" data-i18n-placeholder="auth.username">
+        </div>
+        <div class="form-group">
+          <label for="reg-password" data-i18n="auth.password">รหัสผ่าน</label>
+          <input type="password" id="reg-password" name="password" required autocomplete="new-password"
+                 placeholder="รหัสผ่าน" data-i18n-placeholder="auth.password">
+        </div>
+        <div class="form-group">
+          <label for="reg-confirm" data-i18n="auth.confirmPassword">ยืนยันรหัสผ่าน</label>
+          <input type="password" id="reg-confirm" name="confirmPassword" required autocomplete="new-password"
+                 placeholder="ยืนยันรหัสผ่าน" data-i18n-placeholder="auth.confirmPassword">
+        </div>
+        <button type="submit" class="btn btn--primary btn--full" data-i18n="auth.registerBtn">สมัครสมาชิก</button>
+      </form>
+
+      <div id="auth-message" class="auth-message" hidden></div>
+    </div>
+  </main>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

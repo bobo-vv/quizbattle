@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - สร้าง Quiz</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="create-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <header class="create-topbar">
+    <a href="/dashboard.html" class="btn btn--outline btn--sm" data-i18n="common.back">&larr; กลับ</a>
+    <input type="text" id="quiz-title" class="create-topbar__title" placeholder="ชื่อ Quiz ของคุณ"
+           data-i18n-placeholder="create.quizTitlePlaceholder">
+    <button id="save-quiz-btn" class="btn btn--primary btn--sm" data-i18n="create.save">บันทึก</button>
+  </header>
+
+  <main class="create-container">
+    <!-- Quiz metadata -->
+    <section class="create-meta">
+      <div class="form-group">
+        <label for="quiz-description" data-i18n="create.description">รายละเอียด</label>
+        <textarea id="quiz-description" rows="2" placeholder="อธิบาย Quiz ของคุณ..."
+                  data-i18n-placeholder="create.descPlaceholder"></textarea>
+      </div>
+    </section>
+
+    <div class="create-layout">
+      <!-- Question list panel -->
+      <aside class="question-list-panel">
+        <h2 data-i18n="create.questionList">รายการคำถาม</h2>
+        <ul id="question-list" class="question-list">
+          <!-- Populated by JS -->
+        </ul>
+        <button id="add-question-btn" class="btn btn--primary btn--full" data-i18n="create.addQuestion">+ เพิ่มคำถาม</button>
+      </aside>
+
+      <!-- Question editor panel -->
+      <section id="question-editor" class="question-editor">
+        <div class="question-editor__empty" id="editor-empty">
+          <p data-i18n="create.selectOrAdd">เลือกคำถามจากรายการ หรือเพิ่มคำถามใหม่</p>
+        </div>
+
+        <div class="question-editor__form" id="editor-form" hidden>
+          <!-- Question type -->
+          <div class="form-group">
+            <label data-i18n="create.questionType">ประเภทคำถาม</label>
+            <div class="question-type-selector">
+              <button class="type-btn type-btn--active" data-type="multiple-choice" data-i18n="create.multipleChoice">ตัวเลือก</button>
+              <button class="type-btn" data-type="true-false" data-i18n="create.trueFalse">ถูก/ผิด</button>
+            </div>
+          </div>
+
+          <!-- Question text -->
+          <div class="form-group">
+            <label for="question-text" data-i18n="create.questionText">คำถาม</label>
+            <textarea id="question-text" rows="3" placeholder="พิมพ์คำถามที่นี่..."
+                      data-i18n-placeholder="create.questionPlaceholder"></textarea>
+          </div>
+
+          <!-- Image URL -->
+          <div class="form-group">
+            <label for="question-image" data-i18n="create.imageUrl">URL รูปภาพ (ไม่บังคับ)</label>
+            <input type="url" id="question-image" placeholder="https://example.com/image.jpg"
+                   data-i18n-placeholder="create.imagePlaceholder">
+          </div>
+
+          <!-- Settings row -->
+          <div class="question-settings">
+            <div class="form-group">
+              <label for="time-limit" data-i18n="create.timeLimit">เวลา (วินาที)</label>
+              <select id="time-limit">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="points" data-i18n="create.points">คะแนน</label>
+              <input type="number" id="points" value="1000" min="100" step="100">
+            </div>
+          </div>
+
+          <!-- Multiple Choice options -->
+          <div id="mc-options" class="answer-options">
+            <h3 data-i18n="create.answers">คำตอบ</h3>
+            <div class="answer-grid">
+              <div class="answer-option answer-option--red">
+                <input type="radio" name="correct-answer" value="0" id="correct-0">
+                <label for="correct-0" class="answer-option__radio" data-i18n="create.correct">ถูก</label>
+                <span class="answer-option__shape">&#9650;</span>
+                <input type="text" class="answer-option__input" data-index="0"
+                       placeholder="คำตอบที่ 1" data-i18n-placeholder="create.answer1">
+              </div>
+              <div class="answer-option answer-option--blue">
+                <input type="radio" name="correct-answer" value="1" id="correct-1">
+                <label for="correct-1" class="answer-option__radio" data-i18n="create.correct">ถูก</label>
+                <span class="answer-option__shape">&#9679;</span>
+                <input type="text" class="answer-option__input" data-index="1"
+                       placeholder="คำตอบที่ 2" data-i18n-placeholder="create.answer2">
+              </div>
+              <div class="answer-option answer-option--yellow">
+                <input type="radio" name="correct-answer" value="2" id="correct-2">
+                <label for="correct-2" class="answer-option__radio" data-i18n="create.correct">ถูก</label>
+                <span class="answer-option__shape">&#9670;</span>
+                <input type="text" class="answer-option__input" data-index="2"
+                       placeholder="คำตอบที่ 3" data-i18n-placeholder="create.answer3">
+              </div>
+              <div class="answer-option answer-option--green">
+                <input type="radio" name="correct-answer" value="3" id="correct-3">
+                <label for="correct-3" class="answer-option__radio" data-i18n="create.correct">ถูก</label>
+                <span class="answer-option__shape">&#9632;</span>
+                <input type="text" class="answer-option__input" data-index="3"
+                       placeholder="คำตอบที่ 4" data-i18n-placeholder="create.answer4">
+              </div>
+            </div>
+          </div>
+
+          <!-- True/False options -->
+          <div id="tf-options" class="answer-options" hidden>
+            <h3 data-i18n="create.answers">คำตอบ</h3>
+            <div class="answer-grid answer-grid--tf">
+              <div class="answer-option answer-option--blue">
+                <input type="radio" name="correct-tf" value="true" id="correct-true">
+                <label for="correct-true" class="answer-option__radio" data-i18n="create.correct">ถูก</label>
+                <span class="answer-option__shape">&#9679;</span>
+                <span class="answer-option__text" data-i18n="create.true">ถูก (True)</span>
+              </div>
+              <div class="answer-option answer-option--red">
+                <input type="radio" name="correct-tf" value="false" id="correct-false">
+                <label for="correct-false" class="answer-option__radio" data-i18n="create.correct">ถูก</label>
+                <span class="answer-option__shape">&#9650;</span>
+                <span class="answer-option__text" data-i18n="create.false">ผิด (False)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Delete question -->
+          <div class="question-editor__footer">
+            <button id="delete-question-btn" class="btn btn--danger btn--sm" data-i18n="create.deleteQuestion">ลบคำถามนี้</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/create.js"></script>
+</body>
+</html>

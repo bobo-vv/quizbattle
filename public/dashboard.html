@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizBattle - แดชบอร์ด</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">TH/EN</button>
+
+  <nav class="top-nav">
+    <div class="top-nav__left">
+      <a href="/" class="top-nav__logo">QuizBattle</a>
+    </div>
+    <div class="top-nav__right">
+      <span id="display-username" class="top-nav__user" data-i18n="dashboard.greeting">สวัสดี, Host</span>
+      <button id="logout-btn" class="btn btn--outline btn--sm" data-i18n="dashboard.logout">ออกจากระบบ</button>
+    </div>
+  </nav>
+
+  <main class="dashboard-container">
+    <header class="dashboard-header">
+      <h1 data-i18n="dashboard.title">แดชบอร์ด</h1>
+      <a href="/create.html" class="btn btn--primary btn--lg" data-i18n="dashboard.createQuiz">+ สร้าง Quiz ใหม่</a>
+    </header>
+
+    <section id="quiz-list" class="quiz-grid">
+      <!-- Quiz cards rendered by JS -->
+    </section>
+
+    <div id="empty-state" class="empty-state" hidden>
+      <div class="empty-state__icon">📝</div>
+      <h2 data-i18n="dashboard.emptyTitle">ยังไม่มี Quiz</h2>
+      <p data-i18n="dashboard.emptyMsg">เริ่มสร้าง Quiz แรกของคุณเลย!</p>
+      <a href="/create.html" class="btn btn--primary" data-i18n="dashboard.createFirst">สร้าง Quiz แรก</a>
+    </div>
+
+    <!-- Quiz card template -->
+    <template id="quiz-card-template">
+      <article class="quiz-card">
+        <div class="quiz-card__body">
+          <h3 class="quiz-card__title"></h3>
+          <p class="quiz-card__desc"></p>
+          <div class="quiz-card__meta">
+            <span class="quiz-card__count">
+              <span class="quiz-card__count-num"></span>
+              <span data-i18n="dashboard.questions"> คำถาม</span>
+            </span>
+            <span class="quiz-card__date"></span>
+          </div>
+        </div>
+        <div class="quiz-card__actions">
+          <button class="btn btn--sm btn--outline quiz-card__edit" data-i18n="dashboard.edit">แก้ไข</button>
+          <button class="btn btn--sm btn--primary quiz-card__play" data-i18n="dashboard.play">เล่น</button>
+          <button class="btn btn--sm btn--outline quiz-card__duplicate" data-i18n="dashboard.duplicate">ทำซ้ำ</button>
+          <button class="btn btn--sm btn--danger quiz-card__delete" data-i18n="dashboard.delete">ลบ</button>
+        </div>
+      </article>
+    </template>
+  </main>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
