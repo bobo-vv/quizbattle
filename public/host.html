@@ -28,6 +28,10 @@
           <span id="player-count-num">0</span> <span data-i18n="host.players">ผู้เล่น</span>
         </p>
       </div>
+      <div id="team-lobby-actions" class="team-lobby-actions" hidden>
+        <button id="shuffle-teams-btn" class="btn btn--outline btn--sm" data-i18n="team.shuffle">🔀 สุ่มทีมใหม่</button>
+        <button id="show-teams-btn" class="btn btn--outline btn--sm" data-i18n="team.showTeams">📋 แสดงทีม</button>
+      </div>
       <button id="start-game-btn" class="btn btn--primary btn--xl" data-i18n="host.startGame">เริ่มเกม</button>
     </div>
   </section>
@@ -166,6 +170,7 @@
           <div class="podium__bar podium__bar--3">3</div>
         </div>
       </div>
+      <div id="team-mvp-area" class="team-mvp-area" hidden></div>
       <div id="confetti-area" class="confetti-area"></div>
       <button id="back-dashboard-btn" class="btn btn--secondary btn--lg" data-i18n="host.backDashboard">กลับแดชบอร์ด</button>
     </div>
@@ -178,6 +183,15 @@
 
   <!-- Floating reaction emoji container -->
   <div id="reaction-container" class="reaction-container"></div>
+
+  <!-- Team roster overlay -->
+  <div id="team-roster-overlay" class="team-roster-overlay" hidden>
+    <div class="team-roster">
+      <h2 class="team-roster__title" data-i18n="team.teamRoster">สมาชิกทีม</h2>
+      <div id="team-roster-body" class="team-roster__body"></div>
+      <button id="roster-close-btn" class="btn btn--primary btn--lg">OK</button>
+    </div>
+  </div>
 
   <!-- Sound toggle button -->
   <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">&#128266;</button>

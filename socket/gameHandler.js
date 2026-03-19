@@ -57,10 +57,18 @@ function gameHandler(io) {
         if (game.maxPlayers && game.players.size >= game.maxPlayers) {
           return socket.emit('error', { message: 'Game is full (max ' + game.maxPlayers + ' players)' });
         }
-        var teamName = null;
+        var teamColor = null;
+        var isCaptain = false;
         if (game.teamMode && game.teamCount >= 2) {
-          var teamNames = ['red', 'blue', 'green', 'yellow'].slice(0, game.teamCount);
-          teamName = teamNames[game.teamNextIndex % game.teamCount];
+          var allColors = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
+          var teamColors = allColors.slice(0, game.teamCount);
+          teamColor = teamColors[game.teamNextIndex % game.teamCount];
+          // First player in this team becomes captain
+          var teamHasCaptain = false;
+          game.players.forEach(function (p) {
+            if (p.team === teamColor && p.isCaptain) teamHasCaptain = true;
+          });
+          isCaptain = !teamHasCaptain;
           game.teamNextIndex++;
         }
         game.players.set(socket.id, {
@@ -69,7 +77,8 @@ function gameHandler(io) {
           score: 0,
           streak: 0,
           answers: [],
-          team: teamName,
+          team: teamColor,
+          isCaptain: isCaptain,
         });
       }
 
@@ -93,8 +102,75 @@ function gameHandler(io) {
         quizTitle: game.quiz.title,
         totalQuestions: game.quiz.questions.length,
         team: joiningPlayer ? joiningPlayer.team : null,
+        isCaptain: joiningPlayer ? joiningPlayer.isCaptain : false,
         teamMode: game.teamMode || false,
+        teamNames: game.teamNames || {},
       });
+    });
+
+    // rename-team: captain renames their team
+    socket.on('rename-team', ({ pin, teamName }) => {
+      const game = games.get(pin);
+      if (!game) return;
+      const player = game.players.get(socket.id);
+      if (!player || !player.isCaptain || !player.team) return;
+      if (!teamName || teamName.length > 20) return;
+      if (!game.teamNames) game.teamNames = {};
+      game.teamNames[player.team] = teamName.trim();
+      // Broadcast updated team names to everyone
+      io.to(pin).emit('team-names-updated', { teamNames: game.teamNames });
+    });
+
+    // shuffle-teams: host reshuffles all players into teams
+    socket.on('shuffle-teams', ({ pin }) => {
+      const game = games.get(pin);
+      if (!game || !game.teamMode || game.state !== 'lobby') return;
+      var allColors = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
+      var teamColors = allColors.slice(0, game.teamCount);
+      // Collect all player socket IDs and shuffle
+      var sids = Array.from(game.players.keys());
+      for (var i = sids.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = sids[i]; sids[i] = sids[j]; sids[j] = tmp;
+      }
+      // Reset captains
+      var captainSet = {};
+      sids.forEach(function (sid, idx) {
+        var p = game.players.get(sid);
+        var color = teamColors[idx % game.teamCount];
+        p.team = color;
+        if (!captainSet[color]) {
+          p.isCaptain = true;
+          captainSet[color] = true;
+        } else {
+          p.isCaptain = false;
+        }
+      });
+      game.teamNextIndex = sids.length;
+      // Clear custom names on shuffle
+      game.teamNames = {};
+      var players = getPlayersList(game);
+      io.to(pin).emit('teams-shuffled', { players: players, teamNames: {} });
+      // Notify each player of their new team
+      game.players.forEach(function (p, sid) {
+        io.to(sid).emit('team-assigned', { team: p.team, isCaptain: p.isCaptain });
+      });
+    });
+
+    // show-teams: host broadcasts team roster to everyone
+    socket.on('show-teams', ({ pin }) => {
+      const game = games.get(pin);
+      if (!game || !game.teamMode) return;
+      var allColors = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
+      var teamColors = allColors.slice(0, game.teamCount);
+      var roster = {};
+      teamColors.forEach(function (color) { roster[color] = []; });
+      game.players.forEach(function (p) {
+        if (p.team && roster[p.team]) {
+          roster[p.team].push({ nickname: p.nickname, avatar: p.avatar || '', isCaptain: p.isCaptain || false });
+        }
+      });
+      io.to(pin).emit('team-roster', { roster: roster, teamNames: game.teamNames || {} });
     });
 
     // start-game
@@ -266,22 +342,45 @@ function gameHandler(io) {
 function getPlayersList(game) {
   const players = [];
   game.players.forEach((player) => {
-    players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score, team: player.team || null });
+    players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score, team: player.team || null, isCaptain: player.isCaptain || false });
   });
   return players;
 }
 
 function getTeamRankings(game) {
   if (!game.teamMode || !game.teamCount) return null;
-  const teamScores = {};
+  const teamData = {};
   game.players.forEach((player) => {
     if (player.team) {
-      if (!teamScores[player.team]) teamScores[player.team] = 0;
-      teamScores[player.team] += player.score;
+      if (!teamData[player.team]) {
+        teamData[player.team] = { totalScore: 0, memberCount: 0, mvp: null, mvpScore: -1 };
+      }
+      teamData[player.team].totalScore += player.score;
+      teamData[player.team].memberCount++;
+      if (player.score > teamData[player.team].mvpScore) {
+        teamData[player.team].mvpScore = player.score;
+        teamData[player.team].mvp = { nickname: player.nickname, avatar: player.avatar || '', score: player.score };
+      }
     }
   });
-  const teams = Object.keys(teamScores).map(function (name) {
-    return { team: name, score: teamScores[name] };
+  // Find the largest team size for normalization
+  var maxMembers = 0;
+  Object.keys(teamData).forEach(function (color) {
+    if (teamData[color].memberCount > maxMembers) maxMembers = teamData[color].memberCount;
+  });
+  const teams = Object.keys(teamData).map(function (color) {
+    var td = teamData[color];
+    // Normalized score: average per person × maxMembers (so teams with fewer members aren't penalized)
+    var avgScore = td.memberCount > 0 ? td.totalScore / td.memberCount : 0;
+    var normalizedScore = Math.round(avgScore * maxMembers);
+    return {
+      team: color,
+      customName: (game.teamNames && game.teamNames[color]) || null,
+      score: normalizedScore,
+      rawScore: td.totalScore,
+      memberCount: td.memberCount,
+      mvp: td.mvp,
+    };
   });
   teams.sort(function (a, b) { return b.score - a.score; });
   teams.forEach(function (t, i) { t.rank = i + 1; });
@@ -367,10 +466,42 @@ function triggerTimeUp(io, game) {
     }
   });
 
+  // Team streak bonus: if all team members answered correctly, bonus x1.5
+  var teamStreakBonuses = {};
+  if (game.teamMode && game.teamCount >= 2) {
+    var teamCorrect = {};
+    var teamTotal = {};
+    game.players.forEach(function (p) {
+      if (p.team) {
+        if (!teamTotal[p.team]) { teamTotal[p.team] = 0; teamCorrect[p.team] = 0; }
+        teamTotal[p.team]++;
+        var ans = p.answers.find(function (a) { return a.questionIndex === game.currentQuestion; });
+        if (ans && ans.isCorrect) teamCorrect[p.team]++;
+      }
+    });
+    Object.keys(teamTotal).forEach(function (team) {
+      if (teamTotal[team] > 0 && teamCorrect[team] === teamTotal[team]) {
+        teamStreakBonuses[team] = true;
+        // Apply 50% bonus to each team member for this question
+        game.players.forEach(function (p) {
+          if (p.team === team) {
+            var ans = p.answers.find(function (a) { return a.questionIndex === game.currentQuestion; });
+            if (ans && ans.isCorrect) {
+              var bonus = Math.round(ans.scoreGained * 0.5);
+              p.score += bonus;
+              ans.teamBonus = bonus;
+            }
+          }
+        });
+      }
+    });
+  }
+
   io.to(game.pin).emit('time-up', {
     correctOptionId,
     correctCount,
     wrongCount,
+    teamStreakBonuses: teamStreakBonuses,
   });
 
   // After 5 seconds, auto-show leaderboard/halftime

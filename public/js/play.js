@@ -15,6 +15,17 @@
   var timerInterval = null;
   var timeRemaining = 0;
   var timeLimit     = 20;
+  var myTeam        = null;
+  var myCaptain     = false;
+
+  var ALL_TEAM_COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
+  var TEAM_EMOJI = { red: '🔴', blue: '🔵', green: '🟢', yellow: '🟡', orange: '🟠', pink: '🩷', cyan: '🩵', purple: '🟣', lime: '💚', teal: '🩶' };
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
 
   /* ---- DOM refs ---- */
   var stateWaiting     = document.getElementById('state-waiting');
@@ -97,19 +108,127 @@
   socket.on('game-joined', function (data) {
     // Show team badge if team mode
     if (data && data.team) {
-      var teamBadgeEl = document.getElementById('player-team-badge');
-      var teamLabels = { red: 'Red Team', blue: 'Blue Team', green: 'Green Team', yellow: 'Yellow Team' };
-      if (typeof t === 'function') {
-        teamLabels = { red: t('team.red'), blue: t('team.blue'), green: t('team.green'), yellow: t('team.yellow') };
-      }
-      if (teamBadgeEl) {
-        teamBadgeEl.textContent = teamLabels[data.team] || data.team;
-        teamBadgeEl.className = 'team-badge team-badge--' + data.team;
-        teamBadgeEl.hidden = false;
-      }
+      myTeam = data.team;
+      myCaptain = data.isCaptain || false;
+      showTeamBadge(data.team, data.teamNames || {});
+      // Show captain rename UI
+      if (myCaptain) showCaptainRename();
     }
     switchState('waiting');
   });
+
+  // team-assigned: after shuffle
+  socket.on('team-assigned', function (data) {
+    myTeam = data.team;
+    myCaptain = data.isCaptain || false;
+    showTeamBadge(data.team, {});
+    var renameWrap = document.getElementById('captain-rename-wrap');
+    if (myCaptain) {
+      showCaptainRename();
+    } else if (renameWrap) {
+      renameWrap.hidden = true;
+    }
+    // Close stale roster overlay
+    var rosterOverlay = document.getElementById('player-roster-overlay');
+    if (rosterOverlay) rosterOverlay.hidden = true;
+  });
+
+  // team-names-updated
+  socket.on('team-names-updated', function (data) {
+    if (myTeam) showTeamBadge(myTeam, data.teamNames || {});
+  });
+
+  // team-roster: show overlay on player screen too
+  socket.on('team-roster', function (data) {
+    showPlayerRoster(data.roster, data.teamNames || {});
+  });
+
+  function getTeamLabel(color, teamNames) {
+    if (teamNames && teamNames[color]) return teamNames[color];
+    if (typeof t === 'function') return t('team.' + color);
+    var defaults = { red: 'Red Team', blue: 'Blue Team', green: 'Green Team', yellow: 'Yellow Team', orange: 'Orange Team', pink: 'Pink Team', cyan: 'Cyan Team', purple: 'Purple Team', lime: 'Lime Team', teal: 'Teal Team' };
+    return defaults[color] || color;
+  }
+
+  function showTeamBadge(team, teamNames) {
+    var teamBadgeEl = document.getElementById('player-team-badge');
+    if (!teamBadgeEl) return;
+    var label = (TEAM_EMOJI[team] || '') + ' ' + getTeamLabel(team, teamNames);
+    teamBadgeEl.textContent = label;
+    teamBadgeEl.className = 'team-badge team-badge--' + team;
+    teamBadgeEl.hidden = false;
+  }
+
+  function showCaptainRename() {
+    var wrap = document.getElementById('captain-rename-wrap');
+    if (!wrap) {
+      // Create captain rename UI dynamically
+      wrap = document.createElement('div');
+      wrap.id = 'captain-rename-wrap';
+      wrap.className = 'captain-rename';
+      wrap.innerHTML = '<span class="captain-crown">👑</span>' +
+        '<input id="captain-rename-input" class="captain-rename__input" type="text" maxlength="20" placeholder="' + (typeof t === 'function' ? t('team.renameTeam') : 'Team name...') + '">' +
+        '<button id="captain-rename-btn" class="btn btn--sm btn--primary">' + (typeof t === 'function' ? t('team.rename') : 'Rename') + '</button>';
+      var badge = document.getElementById('player-team-badge');
+      if (badge && badge.parentNode) {
+        badge.parentNode.insertBefore(wrap, badge.nextSibling);
+      }
+    }
+    wrap.hidden = false;
+    var btn = document.getElementById('captain-rename-btn');
+    var input = document.getElementById('captain-rename-input');
+    if (btn && input) {
+      btn.onclick = function () {
+        var name = input.value.trim();
+        if (name && socket) {
+          socket.emit('rename-team', { pin: pin, teamName: name });
+          input.value = '';
+        }
+      };
+      input.onkeydown = function (e) {
+        if (e.key === 'Enter') btn.click();
+      };
+    }
+  }
+
+  function showPlayerRoster(roster, teamNames) {
+    var overlay = document.getElementById('player-roster-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'player-roster-overlay';
+      overlay.className = 'team-roster-overlay';
+      overlay.innerHTML = '<div class="team-roster"><h2 class="team-roster__title">' +
+        (typeof t === 'function' ? t('team.teamRoster') : 'Team Roster') +
+        '</h2><div id="player-roster-body" class="team-roster__body"></div>' +
+        '<button id="player-roster-close" class="btn btn--primary btn--lg">OK</button></div>';
+      document.body.appendChild(overlay);
+      document.getElementById('player-roster-close').addEventListener('click', function () {
+        overlay.hidden = true;
+      });
+    }
+    var body = document.getElementById('player-roster-body');
+    if (!body) return;
+    body.innerHTML = '';
+    ALL_TEAM_COLORS.forEach(function (color) {
+      var members = roster[color];
+      if (!members) return;
+      var label = getTeamLabel(color, teamNames);
+      var col = document.createElement('div');
+      col.className = 'roster-team roster-team--' + color;
+      var html = '<div class="roster-team__header">' + (TEAM_EMOJI[color] || '') + ' ' + escapeHtml(label) + '</div>';
+      html += '<div class="roster-team__members">';
+      members.forEach(function (m) {
+        html += '<div class="roster-team__member">' +
+          (m.isCaptain ? '<span class="captain-crown">👑</span>' : '') +
+          (m.avatar ? '<span class="player-avatar">' + m.avatar + '</span>' : '') +
+          escapeHtml(m.nickname) + '</div>';
+      });
+      html += '</div>';
+      col.innerHTML = html;
+      body.appendChild(col);
+    });
+    overlay.hidden = false;
+  }
 
   socket.on('player-joined', function () {
     // stay in waiting

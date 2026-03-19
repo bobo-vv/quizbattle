@@ -20,6 +20,12 @@
   --answer-blue:   #1368CE;
   --answer-yellow: #D89E00;
   --answer-green:  #26890C;
+  --team-orange:   #E87D0D;
+  --team-pink:     #E91E8C;
+  --team-cyan:     #0DABB8;
+  --team-purple:   #7B2FF0;
+  --team-lime:     #4CAF50;
+  --team-teal:     #008080;
 
   /* Neutral */
   --white:         #FFFFFF;
@@ -2753,8 +2759,10 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--gray-800);
 }
 .team-count-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 48px);
   gap: .5rem;
+  justify-content: center;
 }
 .team-count-btn {
   width: 48px;
@@ -2787,6 +2795,12 @@ button { cursor: pointer; border: none; background: none; }
 .team-badge--blue   { background: var(--answer-blue); }
 .team-badge--green  { background: var(--answer-green); }
 .team-badge--yellow { background: var(--answer-yellow); }
+.team-badge--orange { background: var(--team-orange); }
+.team-badge--pink   { background: var(--team-pink); }
+.team-badge--cyan   { background: var(--team-cyan); }
+.team-badge--purple { background: var(--team-purple); }
+.team-badge--lime   { background: var(--team-lime); }
+.team-badge--teal   { background: var(--team-teal); }
 
 /* Team columns in lobby */
 .team-columns {
@@ -2805,6 +2819,12 @@ button { cursor: pointer; border: none; background: none; }
 .team-column--blue   { border-color: var(--answer-blue); }
 .team-column--green  { border-color: var(--answer-green); }
 .team-column--yellow { border-color: var(--answer-yellow); }
+.team-column--orange { border-color: var(--team-orange); }
+.team-column--pink   { border-color: var(--team-pink); }
+.team-column--cyan   { border-color: var(--team-cyan); }
+.team-column--purple { border-color: var(--team-purple); }
+.team-column--lime   { border-color: var(--team-lime); }
+.team-column--teal   { border-color: var(--team-teal); }
 .team-column__title {
   font-weight: 800;
   font-size: .9rem;
@@ -2837,9 +2857,145 @@ button { cursor: pointer; border: none; background: none; }
 .team-leaderboard-item--blue   { background: var(--answer-blue); }
 .team-leaderboard-item--green  { background: var(--answer-green); }
 .team-leaderboard-item--yellow { background: var(--answer-yellow); }
+.team-leaderboard-item--orange { background: var(--team-orange); }
+.team-leaderboard-item--pink   { background: var(--team-pink); }
+.team-leaderboard-item--cyan   { background: var(--team-cyan); }
+.team-leaderboard-item--purple { background: var(--team-purple); }
+.team-leaderboard-item--lime   { background: var(--team-lime); }
+.team-leaderboard-item--teal   { background: var(--team-teal); }
 .team-leaderboard-item__rank { font-size: 1.3rem; width: 40px; }
 .team-leaderboard-item__name { flex: 1; font-size: 1rem; }
 .team-leaderboard-item__score { font-size: 1.1rem; }
+.team-leaderboard-item__mvp { font-size: .75rem; opacity: .85; margin-left: .5rem; }
+
+/* Team lobby actions */
+.team-lobby-actions {
+  display: flex;
+  gap: .75rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.team-lobby-actions[hidden] { display: none; }
+
+/* Captain crown */
+.captain-crown {
+  font-size: .9rem;
+  margin-right: .2rem;
+}
+
+/* Captain rename (player screen) */
+.captain-rename {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+.captain-rename[hidden] { display: none; }
+.captain-rename__input {
+  padding: .4rem .6rem;
+  border-radius: var(--radius-md);
+  border: 2px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.1);
+  color: var(--white);
+  font-size: .85rem;
+  font-weight: 600;
+  width: 140px;
+}
+.captain-rename__input::placeholder { color: rgba(255,255,255,.5); }
+
+/* Team roster overlay */
+.team-roster-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+.team-roster-overlay[hidden] { display: none; }
+.team-roster {
+  background: var(--gray-900);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  max-width: 900px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: center;
+}
+.team-roster__title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin-bottom: 1.5rem;
+}
+.team-roster__body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.roster-team {
+  background: rgba(255,255,255,.06);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border-top: 4px solid;
+}
+.roster-team--red    { border-color: var(--answer-red); }
+.roster-team--blue   { border-color: var(--answer-blue); }
+.roster-team--green  { border-color: var(--answer-green); }
+.roster-team--yellow { border-color: var(--answer-yellow); }
+.roster-team--orange { border-color: var(--team-orange); }
+.roster-team--pink   { border-color: var(--team-pink); }
+.roster-team--cyan   { border-color: var(--team-cyan); }
+.roster-team--purple { border-color: var(--team-purple); }
+.roster-team--lime   { border-color: var(--team-lime); }
+.roster-team--teal   { border-color: var(--team-teal); }
+.roster-team__header {
+  font-weight: 800;
+  font-size: .95rem;
+  margin-bottom: .5rem;
+}
+.roster-team__member {
+  font-size: .85rem;
+  padding: .25rem 0;
+  font-weight: 600;
+}
+.roster-captain-label {
+  font-size: .7rem;
+  opacity: .7;
+}
+
+/* Team MVP area (final screen) */
+.team-mvp-area {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: center;
+}
+.team-mvp-area[hidden] { display: none; }
+.team-mvp-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.team-mvp-item--red    { background: var(--answer-red); }
+.team-mvp-item--blue   { background: var(--answer-blue); }
+.team-mvp-item--green  { background: var(--answer-green); }
+.team-mvp-item--yellow { background: var(--answer-yellow); }
+.team-mvp-item--orange { background: var(--team-orange); }
+.team-mvp-item--pink   { background: var(--team-pink); }
+.team-mvp-item--cyan   { background: var(--team-cyan); }
+.team-mvp-item--purple { background: var(--team-purple); }
+.team-mvp-item--lime   { background: var(--team-lime); }
+.team-mvp-item--teal   { background: var(--team-teal); }
 
 /* ============================================================
    29. Quiz Statistics
@@ -2936,4 +3092,43 @@ button { cursor: pointer; border: none; background: none; }
   .mode-options { grid-template-columns: 1fr; }
   .team-columns { grid-template-columns: 1fr 1fr; }
   .stats-overview { grid-template-columns: 1fr 1fr; }
+
+  /* Team count buttons: 5 per row on tablet, 3 per row on small */
+  .team-count-buttons { grid-template-columns: repeat(5, 44px); gap: .4rem; }
+  .team-count-btn { width: 44px; height: 44px; font-size: 1rem; }
+
+  /* Team roster overlay: tighter on mobile */
+  .team-roster { padding: 1.2rem; max-height: 90vh; }
+  .team-roster__title { font-size: 1.2rem; margin-bottom: 1rem; }
+  .team-roster__body { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .roster-team { padding: .75rem; }
+  .roster-team__header { font-size: .85rem; }
+  .roster-team__member { font-size: .8rem; }
+
+  /* Captain rename smaller */
+  .captain-rename { flex-wrap: wrap; justify-content: center; }
+  .captain-rename__input { width: 120px; font-size: .8rem; }
+
+  /* Team leaderboard items */
+  .team-leaderboard-item { padding: .6rem .8rem; gap: .5rem; }
+  .team-leaderboard-item__rank { font-size: 1.1rem; width: 32px; }
+  .team-leaderboard-item__name { font-size: .85rem; }
+  .team-leaderboard-item__score { font-size: .95rem; }
+  .team-leaderboard-item__mvp { font-size: .7rem; display: block; margin-left: 0; margin-top: .2rem; }
+
+  /* Team MVP area */
+  .team-mvp-area { flex-direction: column; align-items: center; }
+  .team-mvp-item { font-size: .8rem; padding: .4rem .8rem; }
+
+  /* Team lobby actions */
+  .team-lobby-actions { flex-direction: column; align-items: center; gap: .5rem; }
+}
+
+@media (max-width: 480px) {
+  .team-columns { grid-template-columns: 1fr; }
+  .team-count-buttons { grid-template-columns: repeat(3, 44px); }
+  .team-roster__body { grid-template-columns: 1fr; }
+  .team-column { padding: .75rem; }
+  .team-column__title { font-size: .8rem; }
+  .team-column__player { font-size: .8rem; }
 }

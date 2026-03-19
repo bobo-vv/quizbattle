@@ -13,6 +13,28 @@
   var currentOptions   = [];
   var isTeamMode       = false;
   var teamCount        = 0;
+  var customTeamNames  = {};
+  var lastPlayersList  = [];
+
+  var ALL_TEAM_COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
+  var TEAM_EMOJI = { red: '🔴', blue: '🔵', green: '🟢', yellow: '🟡', orange: '🟠', pink: '🩷', cyan: '🩵', purple: '🟣', lime: '💚', teal: '🩶' };
+
+  function getTeamLabel(color) {
+    if (customTeamNames[color]) return customTeamNames[color];
+    var defaultLabels = {
+      red: typeof t === 'function' ? t('team.red') : 'Red Team',
+      blue: typeof t === 'function' ? t('team.blue') : 'Blue Team',
+      green: typeof t === 'function' ? t('team.green') : 'Green Team',
+      yellow: typeof t === 'function' ? t('team.yellow') : 'Yellow Team',
+      orange: typeof t === 'function' ? t('team.orange') : 'Orange Team',
+      pink: typeof t === 'function' ? t('team.pink') : 'Pink Team',
+      cyan: typeof t === 'function' ? t('team.cyan') : 'Cyan Team',
+      purple: typeof t === 'function' ? t('team.purple') : 'Purple Team',
+      lime: typeof t === 'function' ? t('team.lime') : 'Lime Team',
+      teal: typeof t === 'function' ? t('team.teal') : 'Teal Team',
+    };
+    return defaultLabels[color] || color;
+  }
 
   /* ---- DOM refs ---- */
   var stateLobby       = document.getElementById('state-lobby');
@@ -107,6 +129,9 @@
       renderPlayers(data.players || []);
       generateQR(pin);
       QuizSound.lobbyMusic();
+      // Show team lobby actions if team mode
+      var teamActions = document.getElementById('team-lobby-actions');
+      if (teamActions) teamActions.hidden = !isTeamMode;
     });
 
     /* -- Player events -- */
@@ -254,36 +279,85 @@
       setTimeout(function () { el.remove(); }, 3500);
     });
 
+    // Team name updates
+    socket.on('team-names-updated', function (data) {
+      customTeamNames = data.teamNames || {};
+      // Re-render player list so team column headers update
+      if (state === 'lobby' && lastPlayersList.length > 0) {
+        renderPlayers(lastPlayersList);
+      }
+    });
+
+    // Teams shuffled
+    socket.on('teams-shuffled', function (data) {
+      customTeamNames = data.teamNames || {};
+      renderPlayers(data.players || []);
+      // Close stale roster overlay
+      var rosterOvl = document.getElementById('team-roster-overlay');
+      if (rosterOvl) rosterOvl.hidden = true;
+    });
+
+    // Team roster (full-screen overlay)
+    socket.on('team-roster', function (data) {
+      showTeamRoster(data.roster, data.teamNames || {});
+    });
+
     socket.on('error', function (data) {
       alert(data.message || data.error || 'Error');
     });
   }
 
+  /* ---- team roster overlay ---- */
+  function showTeamRoster(roster, names) {
+    var overlay = document.getElementById('team-roster-overlay');
+    if (!overlay) return;
+    var body = document.getElementById('team-roster-body');
+    if (!body) return;
+    body.innerHTML = '';
+    var teamColors = ALL_TEAM_COLORS.slice(0, teamCount);
+    teamColors.forEach(function (color) {
+      var members = roster[color] || [];
+      var label = (names[color]) || getTeamLabel(color);
+      var col = document.createElement('div');
+      col.className = 'roster-team roster-team--' + color;
+      var html = '<div class="roster-team__header">' + (TEAM_EMOJI[color] || '') + ' ' + escapeHtml(label) + '</div>';
+      html += '<div class="roster-team__members">';
+      members.forEach(function (m) {
+        html += '<div class="roster-team__member">' +
+          (m.isCaptain ? '<span class="captain-crown">👑</span>' : '') +
+          (m.avatar ? '<span class="player-avatar">' + m.avatar + '</span>' : '') +
+          escapeHtml(m.nickname) +
+          (m.isCaptain ? ' <span class="roster-captain-label">(Captain)</span>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+      col.innerHTML = html;
+      body.appendChild(col);
+    });
+    overlay.hidden = false;
+  }
+
   /* ---- render players ---- */
   function renderPlayers(players) {
     if (!playerListEl) return;
+    lastPlayersList = players || [];
     playerListEl.innerHTML = '';
 
     if (isTeamMode && teamCount >= 2) {
-      // Team columns layout
-      var teamNames = ['red', 'blue', 'green', 'yellow'].slice(0, teamCount);
-      var teamLabels = {
-        red: typeof t === 'function' ? t('team.red') : 'Red Team',
-        blue: typeof t === 'function' ? t('team.blue') : 'Blue Team',
-        green: typeof t === 'function' ? t('team.green') : 'Green Team',
-        yellow: typeof t === 'function' ? t('team.yellow') : 'Yellow Team',
-      };
+      var teamColors = ALL_TEAM_COLORS.slice(0, teamCount);
       var container = document.createElement('div');
       container.className = 'team-columns';
-      teamNames.forEach(function (team) {
+      teamColors.forEach(function (color) {
         var col = document.createElement('div');
-        col.className = 'team-column team-column--' + team;
-        col.innerHTML = '<div class="team-column__title">' + teamLabels[team] + '</div>';
-        var teamPlayers = (players || []).filter(function (p) { return p.team === team; });
+        col.className = 'team-column team-column--' + color;
+        col.innerHTML = '<div class="team-column__title">' + (TEAM_EMOJI[color] || '') + ' ' + getTeamLabel(color) + '</div>';
+        var teamPlayers = (players || []).filter(function (p) { return p.team === color; });
         teamPlayers.forEach(function (p) {
           var div = document.createElement('div');
           div.className = 'team-column__player';
-          div.innerHTML = (p.avatar ? '<span class="player-avatar">' + p.avatar + '</span>' : '') + escapeHtml(p.nickname);
+          div.innerHTML = (p.isCaptain ? '<span class="captain-crown">👑</span>' : '') +
+            (p.avatar ? '<span class="player-avatar">' + p.avatar + '</span>' : '') +
+            escapeHtml(p.nickname);
           col.appendChild(div);
         });
         container.appendChild(col);
@@ -413,40 +487,55 @@
   function renderTeamLeaderboard(listEl, teamRankings) {
     if (!listEl) return;
     listEl.innerHTML = '';
-    var teamLabels = {
-      red: typeof t === 'function' ? t('team.red') : 'Red Team',
-      blue: typeof t === 'function' ? t('team.blue') : 'Blue Team',
-      green: typeof t === 'function' ? t('team.green') : 'Green Team',
-      yellow: typeof t === 'function' ? t('team.yellow') : 'Yellow Team',
-    };
     (teamRankings || []).forEach(function (entry) {
+      var label = entry.customName || getTeamLabel(entry.team);
       var li = document.createElement('li');
       li.className = 'team-leaderboard-item team-leaderboard-item--' + entry.team;
       li.innerHTML =
         '<span class="team-leaderboard-item__rank">#' + entry.rank + '</span>' +
-        '<span class="team-leaderboard-item__name">' + (teamLabels[entry.team] || entry.team) + '</span>' +
+        '<span class="team-leaderboard-item__name">' + (TEAM_EMOJI[entry.team] || '') + ' ' + escapeHtml(label) + '</span>' +
         '<span class="team-leaderboard-item__score">' + entry.score + '</span>';
+      if (entry.mvp) {
+        li.innerHTML += '<span class="team-leaderboard-item__mvp">🏅 ' + escapeHtml(entry.mvp.nickname) + '</span>';
+      }
       listEl.appendChild(li);
     });
   }
 
   /* ---- render team podium ---- */
   function renderTeamPodium(teamRankings) {
-    var teamLabels = {
-      red: typeof t === 'function' ? t('team.red') : 'Red Team',
-      blue: typeof t === 'function' ? t('team.blue') : 'Blue Team',
-      green: typeof t === 'function' ? t('team.green') : 'Green Team',
-      yellow: typeof t === 'function' ? t('team.yellow') : 'Yellow Team',
-    };
-    var teamEmoji = { red: '🔴', blue: '🔵', green: '🟢', yellow: '🟡' };
     for (var place = 1; place <= 3; place++) {
       var entry = (teamRankings || [])[place - 1];
       var nameEl = document.getElementById('podium-' + place + '-name');
       var scoreEl = document.getElementById('podium-' + place + '-score');
       var avatarEl = document.getElementById('podium-' + place + '-avatar');
-      if (nameEl) nameEl.textContent = entry ? (teamLabels[entry.team] || entry.team) : '-';
-      if (scoreEl) scoreEl.textContent = entry ? entry.score : '0';
-      if (avatarEl) avatarEl.textContent = entry ? (teamEmoji[entry.team] || '🏆') : '?';
+      if (entry) {
+        var label = entry.customName || getTeamLabel(entry.team);
+        if (nameEl) nameEl.textContent = label;
+        if (scoreEl) scoreEl.textContent = entry.score;
+        if (avatarEl) avatarEl.textContent = TEAM_EMOJI[entry.team] || '🏆';
+      } else {
+        if (nameEl) nameEl.textContent = '-';
+        if (scoreEl) scoreEl.textContent = '0';
+        if (avatarEl) avatarEl.textContent = '?';
+      }
+    }
+    // Show MVP section under podium
+    var mvpArea = document.getElementById('team-mvp-area');
+    if (mvpArea) {
+      mvpArea.innerHTML = '';
+      (teamRankings || []).forEach(function (entry) {
+        if (entry.mvp) {
+          var label = entry.customName || getTeamLabel(entry.team);
+          var div = document.createElement('div');
+          div.className = 'team-mvp-item team-mvp-item--' + entry.team;
+          div.innerHTML = '🏅 <strong>' + escapeHtml(label) + ' MVP:</strong> ' +
+            (entry.mvp.avatar ? '<span class="player-avatar">' + entry.mvp.avatar + '</span>' : '') +
+            escapeHtml(entry.mvp.nickname) + ' (' + entry.mvp.score + ')';
+          mvpArea.appendChild(div);
+        }
+      });
+      mvpArea.hidden = false;
     }
   }
 
@@ -487,6 +576,27 @@
   }
 
   /* ---- button handlers ---- */
+  var shuffleBtn = document.getElementById('shuffle-teams-btn');
+  var showTeamsBtn = document.getElementById('show-teams-btn');
+  var rosterOverlay = document.getElementById('team-roster-overlay');
+  var rosterCloseBtn = document.getElementById('roster-close-btn');
+
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener('click', function () {
+      if (socket) socket.emit('shuffle-teams', { pin: pin });
+    });
+  }
+  if (showTeamsBtn) {
+    showTeamsBtn.addEventListener('click', function () {
+      if (socket) socket.emit('show-teams', { pin: pin });
+    });
+  }
+  if (rosterCloseBtn) {
+    rosterCloseBtn.addEventListener('click', function () {
+      if (rosterOverlay) rosterOverlay.hidden = true;
+    });
+  }
+
   if (startGameBtn) {
     startGameBtn.addEventListener('click', function () {
       if (socket) socket.emit('start-game', { pin: pin });

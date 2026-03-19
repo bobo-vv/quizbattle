@@ -66,7 +66,8 @@ router.post('/create', requireAuth, async (req, res) => {
       timer: null,
       maxPlayers: limits.maxPlayers,
       teamMode: teamMode || false,
-      teamCount: (teamMode && teamCount >= 2 && teamCount <= 4) ? teamCount : 0,
+      teamCount: (teamMode && teamCount >= 2 && teamCount <= 10) ? teamCount : 0,
+      teamNames: {},  // { red: 'Custom Name', ... } set by captains
       teamNextIndex: 0,
     };
 
