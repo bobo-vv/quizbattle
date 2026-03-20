@@ -179,6 +179,10 @@ function gameHandler(io) {
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
       }
+      // Prevent double-start: only allow from lobby state
+      if (game.state !== 'lobby') {
+        return;
+      }
       if (game.players.size === 0) {
         return socket.emit('error', { message: 'No players have joined' });
       }
@@ -396,6 +400,9 @@ function getTeamRankings(game) {
 }
 
 function sendQuestion(io, game) {
+  // Prevent sending a new question if one is already active
+  if (game.state === 'question') return;
+
   game.currentQuestion += 1;
 
   // Check if all questions are done
