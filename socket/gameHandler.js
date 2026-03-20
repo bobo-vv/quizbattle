@@ -1,6 +1,12 @@
 const { games } = require('../routes/game');
 const { pool } = require('../db/db');
 
+// O(1) lookup: socketId → game pin (avoids iterating all games on disconnect)
+const socketToPin = new Map();
+
+// Debounce timers for player-joined broadcasts (avoid flooding when many join at once)
+const joinBroadcastTimers = new Map();
+
 function gameHandler(io) {
   io.on('connection', (socket) => {
 
@@ -12,6 +18,7 @@ function gameHandler(io) {
       }
       socket.join(pin);
       game.hostSocketId = socket.id;
+      socketToPin.set(socket.id, pin);
       socket.emit('host-joined', {
         pin: game.pin,
         quizTitle: game.quiz.title,
@@ -47,6 +54,7 @@ function gameHandler(io) {
         // Reconnecting player - preserve score and answers
         const oldPlayer = game.players.get(existingSocketId);
         game.players.delete(existingSocketId);
+        socketToPin.delete(existingSocketId);
         game.players.set(socket.id, oldPlayer);
       } else {
         // New player
@@ -83,20 +91,11 @@ function gameHandler(io) {
       }
 
       socket.join(pin);
-
-      const players = getPlayersList(game);
+      socketToPin.set(socket.id, pin);
 
       const joiningPlayer = game.players.get(socket.id);
 
-      // Notify everyone in the room (including host)
-      io.to(pin).emit('player-joined', {
-        nickname,
-        playerCount: game.players.size,
-        players,
-        teamMode: game.teamMode || false,
-      });
-
-      // Confirm to joining player
+      // Confirm to joining player immediately
       socket.emit('game-joined', {
         pin: game.pin,
         quizTitle: game.quiz.title,
@@ -106,6 +105,9 @@ function gameHandler(io) {
         teamMode: game.teamMode || false,
         teamNames: game.teamNames || {},
       });
+
+      // Debounce player-joined broadcast: wait 200ms to batch rapid joins
+      debouncedPlayerBroadcast(io, game, pin);
     });
 
     // rename-team: captain renames their team
@@ -189,6 +191,9 @@ function gameHandler(io) {
       if (!game.quiz.questions || game.quiz.questions.length === 0) {
         return socket.emit('error', { message: 'This quiz has no questions. Please add questions first.' });
       }
+
+      // Initialize answered counter
+      game.answeredThisRound = 0;
 
       game.startedAt = new Date();
       game.state = 'countdown';
@@ -301,19 +306,17 @@ function gameHandler(io) {
         streak: player.streak,
       });
 
-      // Count how many have answered
-      let answeredCount = 0;
-      game.players.forEach((p) => {
-        if (p.answers.find((a) => a.questionIndex === questionIndex)) {
-          answeredCount++;
-        }
-      });
+      // Increment counter (O(1) instead of iterating all players)
+      game.answeredThisRound = (game.answeredThisRound || 0) + 1;
+      const answeredCount = game.answeredThisRound;
 
-      // Notify host with answer count
-      io.to(pin).emit('player-answered', {
-        answeredCount,
-        totalPlayers: game.players.size,
-      });
+      // Notify HOST only (not all 100 players) with answer count
+      if (game.hostSocketId) {
+        io.to(game.hostSocketId).emit('player-answered', {
+          answeredCount,
+          totalPlayers: game.players.size,
+        });
+      }
 
       // If all players answered, trigger time-up immediately
       if (answeredCount >= game.players.size) {
@@ -330,25 +333,46 @@ function gameHandler(io) {
       if (!game) return;
       const player = game.players.get(socket.id);
       if (!player) return;
-      // Broadcast to everyone in room (including host)
-      io.to(pin).emit('reaction', { nickname: player.nickname, emoji: emoji });
+      // Send to host only (host screen shows floating reactions)
+      if (game.hostSocketId) {
+        io.to(game.hostSocketId).emit('reaction', { nickname: player.nickname, emoji: emoji });
+      }
     });
 
-    // disconnect
+    // disconnect: O(1) lookup via socketToPin map
     socket.on('disconnect', () => {
-      games.forEach((game, pin) => {
-        if (game.players.has(socket.id)) {
-          const player = game.players.get(socket.id);
-          game.players.delete(socket.id);
-          io.to(pin).emit('player-left', {
-            nickname: player.nickname,
-            playerCount: game.players.size,
-            players: getPlayersList(game),
-          });
-        }
-      });
+      const pin = socketToPin.get(socket.id);
+      socketToPin.delete(socket.id);
+      if (!pin) return;
+
+      const game = games.get(pin);
+      if (!game) return;
+
+      if (game.players.has(socket.id)) {
+        const player = game.players.get(socket.id);
+        game.players.delete(socket.id);
+
+        // Debounce player-left broadcast
+        debouncedPlayerBroadcast(io, game, pin);
+      }
     });
   });
+}
+
+// Debounced broadcast: batches rapid join/leave events into one broadcast
+function debouncedPlayerBroadcast(io, game, pin) {
+  if (joinBroadcastTimers.has(pin)) {
+    clearTimeout(joinBroadcastTimers.get(pin));
+  }
+  joinBroadcastTimers.set(pin, setTimeout(() => {
+    joinBroadcastTimers.delete(pin);
+    const players = getPlayersList(game);
+    io.to(pin).emit('player-joined', {
+      playerCount: game.players.size,
+      players,
+      teamMode: game.teamMode || false,
+    });
+  }, 200)); // 200ms debounce window
 }
 
 function getPlayersList(game) {
@@ -404,6 +428,9 @@ function sendQuestion(io, game) {
   if (game.state === 'question') return;
 
   game.currentQuestion += 1;
+
+  // Reset answered counter for new round
+  game.answeredThisRound = 0;
 
   // Check if all questions are done
   if (game.currentQuestion >= game.quiz.questions.length) {
@@ -572,6 +599,7 @@ function getRankings(game) {
   return rankings;
 }
 
+// Batch INSERT for game history — handles 100 players × 10 questions efficiently
 async function saveGameHistory(game, rankings) {
   const client = await pool.connect();
   try {
@@ -586,27 +614,64 @@ async function saveGameHistory(game, rankings) {
     );
     const sessionId = sessionResult.rows[0].id;
 
-    for (const r of rankings) {
-      const player = findPlayerByNickname(game, r.nickname);
-      const totalCorrect = player ? player.answers.filter(a => a.isCorrect).length : 0;
+    // Batch insert game_players (all in one query)
+    if (rankings.length > 0) {
+      const playerValues = [];
+      const playerParams = [];
+      let paramIdx = 1;
+      for (const r of rankings) {
+        const player = findPlayerByNickname(game, r.nickname);
+        const totalCorrect = player ? player.answers.filter(a => a.isCorrect).length : 0;
+        playerValues.push(`($${paramIdx}, $${paramIdx+1}, $${paramIdx+2}, $${paramIdx+3}, $${paramIdx+4}, $${paramIdx+5}, $${paramIdx+6}, $${paramIdx+7})`);
+        playerParams.push(sessionId, r.nickname, r.avatar || '', player?.team || null,
+                          r.rank, r.score, totalCorrect, game.quiz.questions.length);
+        paramIdx += 8;
+      }
       await client.query(
         `INSERT INTO game_players (game_session_id, nickname, avatar, team_name, final_rank, final_score, total_correct, total_questions)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [sessionId, r.nickname, r.avatar || '', player?.team || null,
-         r.rank, r.score, totalCorrect, game.quiz.questions.length]
+         VALUES ${playerValues.join(', ')}`,
+        playerParams
       );
     }
 
+    // Batch insert player_answers (all in one query, chunked if very large)
+    const answerValues = [];
+    const answerParams = [];
+    let aIdx = 1;
     for (const [, player] of game.players) {
       for (const ans of player.answers) {
         const q = game.quiz.questions[ans.questionIndex];
-        await client.query(
-          `INSERT INTO player_answers (game_session_id, nickname, question_id, question_text, option_id, is_correct, score_gained)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [sessionId, player.nickname, q?.id || null, q?.question_text || '',
-           ans.optionId, ans.isCorrect, ans.scoreGained]
-        );
+        answerValues.push(`($${aIdx}, $${aIdx+1}, $${aIdx+2}, $${aIdx+3}, $${aIdx+4}, $${aIdx+5}, $${aIdx+6})`);
+        answerParams.push(sessionId, player.nickname, q?.id || null, q?.question_text || '',
+                          ans.optionId, ans.isCorrect, ans.scoreGained);
+        aIdx += 7;
       }
+    }
+    // Insert in chunks of 500 rows to stay within PostgreSQL parameter limit (max ~65535 params)
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < answerValues.length; i += CHUNK_SIZE) {
+      const chunkValues = answerValues.slice(i, i + CHUNK_SIZE);
+      // Recalculate param indices for this chunk
+      const chunkParams = answerParams.slice(i * 7, (i + CHUNK_SIZE) * 7);
+      // Re-number placeholders for this chunk
+      const renumbered = [];
+      let pIdx = 1;
+      for (let j = i; j < Math.min(i + CHUNK_SIZE, answerValues.length); j++) {
+        renumbered.push(`($${pIdx}, $${pIdx+1}, $${pIdx+2}, $${pIdx+3}, $${pIdx+4}, $${pIdx+5}, $${pIdx+6})`);
+        pIdx += 7;
+      }
+      const chunkParamsSlice = [];
+      for (let j = i; j < Math.min(i + CHUNK_SIZE, answerValues.length); j++) {
+        const base = j * 7;
+        for (let k = 0; k < 7; k++) {
+          chunkParamsSlice.push(answerParams[base + k]);
+        }
+      }
+      await client.query(
+        `INSERT INTO player_answers (game_session_id, nickname, question_id, question_text, option_id, is_correct, score_gained)
+         VALUES ${renumbered.join(', ')}`,
+        chunkParamsSlice
+      );
     }
 
     await client.query('COMMIT');
