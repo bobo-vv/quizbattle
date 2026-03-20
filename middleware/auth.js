@@ -30,7 +30,7 @@ function getLimits(role) {
     case 'premium':
       return { maxQuizzes: Infinity, maxPlayers: 50 };
     default: // member
-      return { maxQuizzes: 5, maxPlayers: 10 };
+      return { maxQuizzes: 5, maxPlayers: 30 };
   }
 }
 

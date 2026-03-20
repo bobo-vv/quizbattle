@@ -16,7 +16,14 @@ const gameHandler = require('./socket/gameHandler');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  // Render.com proxy-friendly settings
+  transports: ['websocket', 'polling'],  // prefer WebSocket, fallback to polling
+  pingTimeout: 60000,                     // wait 60s before considering connection dead
+  pingInterval: 25000,                    // ping every 25s to keep connection alive
+  maxHttpBufferSize: 1e6,                 // 1MB max message size
+  connectTimeout: 10000,                  // 10s handshake timeout
+});
 
 // Middleware
 app.use(express.json());
@@ -55,8 +62,9 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Share session with Socket.io
-io.engine.use(sessionMiddleware);
+// NOTE: Session middleware removed from Socket.io to reduce DB load.
+// Players don't need HTTP sessions — they identify via pin + nickname over socket.
+// Only host routes (Express) use sessions for authentication.
 
 // Socket.io handler
 gameHandler(io);
