@@ -162,7 +162,7 @@ button { cursor: pointer; border: none; background: none; }
 
 .btn--sm   { padding: .45rem 1rem; font-size: .85rem; }
 .btn--lg   { padding: .9rem 2rem; font-size: 1.15rem; }
-.btn--xl   { padding: 1.1rem 2.8rem; font-size: 1.35rem; }
+.btn--xl   { padding: 1.1rem 2.8rem; font-size: 1.35rem; flex-shrink: 0; }
 .btn--full { width: 100%; }
 
 /* ---- Forms ---- */
@@ -836,12 +836,17 @@ button { cursor: pointer; border: none; background: none; }
   width: 100%;
   max-width: 700px;
   animation: slideUp .6s ease;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  max-height: 100dvh;
 }
 .lobby__brand {
   font-size: 2.5rem;
   font-weight: 900;
   margin-bottom: 1.5rem;
   text-shadow: 0 3px 12px rgba(0,0,0,.2);
+  flex-shrink: 0;
 }
 .lobby__pin-box {
   background: var(--white);
@@ -851,6 +856,7 @@ button { cursor: pointer; border: none; background: none; }
   display: inline-block;
   margin-bottom: 2rem;
   box-shadow: var(--shadow-lg);
+  flex-shrink: 0;
 }
 .lobby__pin-label {
   font-size: 1rem;
@@ -865,6 +871,11 @@ button { cursor: pointer; border: none; background: none; }
 }
 .lobby__players {
   margin-bottom: 2rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .lobby__players h2 {
   font-size: 1.2rem;
@@ -877,7 +888,18 @@ button { cursor: pointer; border: none; background: none; }
   gap: .6rem;
   justify-content: center;
   margin-bottom: 1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  padding: .5rem;
+  align-content: flex-start;
 }
+/* Scrollbar styling for player list */
+.lobby__player-list::-webkit-scrollbar { width: 6px; }
+.lobby__player-list::-webkit-scrollbar-track { background: rgba(255,255,255,.1); border-radius: 3px; }
+.lobby__player-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.4); border-radius: 3px; }
+.lobby__player-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.6); }
 .lobby__player-chip {
   background: rgba(255,255,255,.2);
   backdrop-filter: blur(4px);
@@ -891,6 +913,13 @@ button { cursor: pointer; border: none; background: none; }
 .lobby__player-count {
   font-size: .95rem;
   opacity: .7;
+  flex-shrink: 0;
+}
+
+/* Start button always visible at bottom */
+#start-game-btn {
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 /* ---- Host Question ---- */
@@ -2893,6 +2922,7 @@ button { cursor: pointer; border: none; background: none; }
   justify-content: center;
   margin: 1.2rem 0 .5rem;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .team-lobby-actions[hidden] { display: none; }
 .team-lobby-actions .btn {
