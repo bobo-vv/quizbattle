@@ -208,7 +208,15 @@ function gameHandler(io) {
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
       }
-
+      // Only allow advancing from leaderboard or halftime state
+      if (game.state !== 'leaderboard' && game.state !== 'halftime') {
+        return;
+      }
+      // Clear any pending timer to prevent double-fire
+      if (game.timer) {
+        clearTimeout(game.timer);
+        game.timer = null;
+      }
       sendQuestion(io, game);
     });
 
@@ -511,6 +519,9 @@ function triggerTimeUp(io, game) {
 }
 
 function showLeaderboardOrHalftime(io, game) {
+  // Prevent double-fire: only transition from answer_review state
+  if (game.state !== 'answer_review') return;
+
   const totalQ = game.quiz.questions.length;
   const halfwayIndex = Math.floor(totalQ / 2) - 1; // 0-based index of halfway question
   const isHalftime = totalQ >= 4 && game.currentQuestion === halfwayIndex;
