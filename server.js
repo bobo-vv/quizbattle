@@ -41,9 +41,13 @@ const sessionMiddleware = session({
     tableName: 'session',
     createTableIfMissing: true,
   }),
-  secret: process.env.SESSION_SECRET || (process.env.NODE_ENV === 'production'
-    ? (() => { console.error('FATAL: SESSION_SECRET must be set in production'); process.exit(1); })()
-    : 'zapquiz-dev-secret-' + Date.now()),
+  secret: process.env.SESSION_SECRET || (() => {
+    const fallback = require('crypto').randomBytes(32).toString('hex');
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('WARNING: SESSION_SECRET not set — using random secret (sessions will reset on restart)');
+    }
+    return fallback;
+  })(),
   resave: false,
   saveUninitialized: false,
   cookie: {
