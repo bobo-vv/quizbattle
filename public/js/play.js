@@ -97,6 +97,7 @@
   /* ---- init ---- */
   if (!pin || !nickname) {
     window.location.href = '/join.html';
+    return;
   }
 
   if (playerNicknameEl) playerNicknameEl.textContent = nickname;

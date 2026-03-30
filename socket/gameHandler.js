@@ -400,7 +400,6 @@ function gameHandler(io) {
         } else {
           // During game: mark as disconnected, keep data for reconnection
           player.disconnected = true;
-          player.disconnectedSocketId = socket.id;
 
           // Fix answeredThisRound counter if player answered this round
           if (game.state === 'question' && game.answeredThisRound > 0) {
@@ -446,11 +445,13 @@ function debouncedPlayerBroadcast(io, game, pin) {
   joinBroadcastTimers.set(pin, setTimeout(() => {
     joinBroadcastTimers.delete(pin);
     const players = getPlayersList(game);
-    io.to(pin).emit('player-joined', {
+    const eventData = {
       playerCount: game.players.size,
       players,
       teamMode: game.teamMode || false,
-    });
+    };
+    io.to(pin).emit('player-joined', eventData);
+    io.to(pin).emit('player-left', eventData);
   }, 200)); // 200ms debounce window
 }
 
@@ -592,10 +593,11 @@ function triggerTimeUp(io, game) {
   const correctOption = question.options.find((o) => o.is_correct);
   const correctOptionId = correctOption ? correctOption.id : null;
 
-  // Count correct/wrong answers
+  // Count correct/wrong answers (skip disconnected players)
   let correctCount = 0;
   let wrongCount = 0;
   game.players.forEach((player) => {
+    if (player.disconnected) return;
     const answer = player.answers.find((a) => a.questionIndex === game.currentQuestion);
     if (answer) {
       if (answer.isCorrect) correctCount++;
@@ -611,6 +613,7 @@ function triggerTimeUp(io, game) {
     var teamCorrect = {};
     var teamTotal = {};
     game.players.forEach(function (p) {
+      if (p.disconnected) return; // skip disconnected players
       if (p.team) {
         if (!teamTotal[p.team]) { teamTotal[p.team] = 0; teamCorrect[p.team] = 0; }
         teamTotal[p.team]++;
@@ -752,8 +755,6 @@ async function saveGameHistory(game, rankings) {
     const CHUNK_SIZE = 500;
     for (let i = 0; i < answerValues.length; i += CHUNK_SIZE) {
       const chunkValues = answerValues.slice(i, i + CHUNK_SIZE);
-      // Recalculate param indices for this chunk
-      const chunkParams = answerParams.slice(i * 7, (i + CHUNK_SIZE) * 7);
       // Re-number placeholders for this chunk
       const renumbered = [];
       let pIdx = 1;
