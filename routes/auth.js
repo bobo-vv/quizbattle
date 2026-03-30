@@ -6,17 +6,49 @@ const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 const SALT_ROUNDS = 10;
 
+// Simple in-memory rate limiter (per IP)
+const loginAttempts = new Map();
+function loginRateLimit(req, res, next) {
+  const ip = req.ip;
+  const now = Date.now();
+  const window = 15 * 60 * 1000; // 15 minutes
+  const maxAttempts = 10;
+  let entry = loginAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + window };
+  }
+  entry.count++;
+  loginAttempts.set(ip, entry);
+  if (entry.count > maxAttempts) {
+    return res.status(429).json({ error: 'Too many login attempts. Try again later.' });
+  }
+  next();
+}
+// Clean up old entries every 30 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of loginAttempts) {
+    if (now > entry.resetAt) loginAttempts.delete(ip);
+  }
+}, 30 * 60 * 1000);
+
 // Simple email format validation
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// POST /register
-router.post('/register', async (req, res) => {
+// POST /register (rate limited same as login)
+router.post('/register', loginRateLimit, async (req, res) => {
   try {
     const { username, password, email, acceptedTerms } = req.body;
     if (!username || !password || !email) {
       return res.status(400).json({ error: 'Username, email and password are required' });
+    }
+    if (username.length < 3 || username.length > 50) {
+      return res.status(400).json({ error: 'Username must be 3-50 characters' });
+    }
+    if (password.length < 4) {
+      return res.status(400).json({ error: 'Password must be at least 4 characters' });
     }
     if (!isValidEmail(email)) {
       return res.status(400).json({ error: 'Invalid email format' });
@@ -51,8 +83,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST /login
-router.post('/login', async (req, res) => {
+// POST /login (rate limited: 10 per 15 min per IP)
+router.post('/login', loginRateLimit, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {

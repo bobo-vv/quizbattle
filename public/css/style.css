@@ -2,8 +2,7 @@
    ZapQuiz – Complete CSS Theme
    ============================================================ */
 
-/* ---- Google Fonts ---- */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+/* ---- Google Fonts loaded via <link> in HTML <head> for non-blocking render ---- */
 
 /* ============================================================
    0. CSS Custom Properties
@@ -34,6 +33,7 @@
   --gray-200:      #CCCCCC;
   --gray-500:      #6B7280;
   --gray-800:      #333333;
+  --gray-900:      #1a1a2e;
   --black:         #111111;
 
   /* Functional */
@@ -905,8 +905,7 @@ button { cursor: pointer; border: none; background: none; }
 .lobby__player-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.4); border-radius: 3px; }
 .lobby__player-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.6); }
 .lobby__player-chip {
-  background: rgba(255,255,255,.2);
-  backdrop-filter: blur(4px);
+  background: rgba(255,255,255,.25);
   padding: .5rem 1.2rem;
   border-radius: var(--radius-full);
   font-size: .9rem;
@@ -1209,6 +1208,9 @@ button { cursor: pointer; border: none; background: none; }
   font-weight: 700;
   font-size: 1rem;
   width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-align: left;
   flex-shrink: 0;
 }
@@ -1278,6 +1280,10 @@ button { cursor: pointer; border: none; background: none; }
 .podium__name {
   font-weight: 800;
   font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
 }
 .podium__score {
   font-size: .85rem;
@@ -2546,35 +2552,8 @@ button { cursor: pointer; border: none; background: none; }
   }
 }
 
-/* ============================================================
-   24. Sound Toggle Button
-   ============================================================ */
-.sound-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 900;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,.3);
-  background: rgba(0,0,0,.3);
-  backdrop-filter: blur(4px);
-  color: var(--white);
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--transition), border-color var(--transition);
-}
-.sound-toggle:hover {
-  background: rgba(0,0,0,.5);
-  border-color: rgba(255,255,255,.5);
-}
-.sound-toggle--muted {
-  opacity: .5;
-}
+/* Section 24 removed — duplicate of .sound-toggle at line 1085.
+   The primary definition (bottom-right, 48px, z-index:999) is kept. */
 
 /* ============================================================
    25. Halftime Banner (Player)

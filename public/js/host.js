@@ -161,7 +161,7 @@
         if (count > 0) {
           if (countdownNumEl) {
             countdownNumEl.textContent = count;
-            countdownNumEl.className = 'countdown-number countdown-number--pop';
+            countdownNumEl.className = 'countdown-number';
             void countdownNumEl.offsetWidth;
             countdownNumEl.className = 'countdown-number countdown-number--pop';
           }
@@ -181,6 +181,7 @@
 
     /* -- Game events -- */
     socket.on('game-started', function () {
+      QuizSound.stopMusic();
       QuizSound.gameStart();
     });
 
@@ -230,10 +231,12 @@
       clearInterval(timerInterval);
       QuizSound.stopMusic();
       QuizSound.timeUp();
+      if (nextBtn) nextBtn.disabled = false;
       showReview(data.correctOptionId, data.correctCount || 0, data.wrongCount || 0);
     });
 
     socket.on('halftime', function (data) {
+      if (halftimeNextBtn) halftimeNextBtn.disabled = false;
       QuizSound.halftime();
       if (isTeamMode && data.teamRankings) {
         renderTeamLeaderboard(halftimeList, data.teamRankings);
@@ -245,6 +248,7 @@
     });
 
     socket.on('leaderboard', function (data) {
+      if (leaderboardNext) leaderboardNext.disabled = false;
       QuizSound.leaderboard();
       if (isTeamMode && data.teamRankings) {
         renderTeamLeaderboard(leaderboardList, data.teamRankings);
@@ -270,6 +274,8 @@
     var reactionContainer = document.getElementById('reaction-container');
     socket.on('reaction', function (data) {
       if (!reactionContainer) return;
+      // Cap simultaneous reaction elements to prevent DOM bloat
+      if (reactionContainer.childElementCount >= 30) return;
       var el = document.createElement('div');
       el.className = 'reaction-float';
       el.textContent = data.emoji;
@@ -555,6 +561,8 @@
       piece.style.animationDuration = (2 + Math.random() * 3) + 's';
       area.appendChild(piece);
     }
+    // Clean up confetti DOM nodes after animations finish
+    setTimeout(function () { area.innerHTML = ''; }, 7000);
   }
 
   /* ---- generate QR code ---- */
@@ -600,12 +608,15 @@
 
   if (startGameBtn) {
     startGameBtn.addEventListener('click', function () {
+      startGameBtn.disabled = true;
       if (socket) socket.emit('start-game', { pin: pin });
+      setTimeout(function () { startGameBtn.disabled = false; }, 3000);
     });
   }
 
   if (nextBtn) {
     nextBtn.addEventListener('click', function () {
+      nextBtn.disabled = true;
       // From review → show leaderboard/halftime (not skip to next question)
       if (socket) socket.emit('show-results', { pin: pin });
     });
@@ -613,12 +624,14 @@
 
   if (leaderboardNext) {
     leaderboardNext.addEventListener('click', function () {
+      leaderboardNext.disabled = true;
       if (socket) socket.emit('next-question', { pin: pin });
     });
   }
 
   if (halftimeNextBtn) {
     halftimeNextBtn.addEventListener('click', function () {
+      halftimeNextBtn.disabled = true;
       if (socket) socket.emit('next-question', { pin: pin });
     });
   }

@@ -81,12 +81,21 @@ router.get('/:id', async (req, res) => {
 
     const questions = questionsResult.rows;
 
-    for (const question of questions) {
+    // Batch-load all options in one query (fixes N+1 problem)
+    if (questions.length > 0) {
+      const questionIds = questions.map(q => q.id);
       const optionsResult = await pool.query(
-        'SELECT * FROM options WHERE question_id = $1 ORDER BY sort_order ASC',
-        [question.id]
+        'SELECT * FROM options WHERE question_id = ANY($1) ORDER BY question_id, sort_order ASC',
+        [questionIds]
       );
-      question.options = optionsResult.rows;
+      const optionsByQuestion = {};
+      for (const opt of optionsResult.rows) {
+        if (!optionsByQuestion[opt.question_id]) optionsByQuestion[opt.question_id] = [];
+        optionsByQuestion[opt.question_id].push(opt);
+      }
+      for (const question of questions) {
+        question.options = optionsByQuestion[question.id] || [];
+      }
     }
 
     quiz.questions = questions;

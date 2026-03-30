@@ -7,6 +7,24 @@ const socketToPin = new Map();
 // Debounce timers for player-joined broadcasts (avoid flooding when many join at once)
 const joinBroadcastTimers = new Map();
 
+// Per-socket rate limiting
+const socketRates = new Map();
+function isRateLimited(socketId, max, windowMs) {
+  const now = Date.now();
+  let entry = socketRates.get(socketId);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + (windowMs || 1000) };
+  }
+  entry.count++;
+  socketRates.set(socketId, entry);
+  return entry.count > (max || 10);
+}
+
+// Helper: check if socket is the host of a game
+function isHost(game, socketId) {
+  return game.hostSocketId === socketId;
+}
+
 function gameHandler(io) {
   io.on('connection', (socket) => {
 
@@ -124,10 +142,11 @@ function gameHandler(io) {
       io.to(pin).emit('team-names-updated', { teamNames: game.teamNames });
     });
 
-    // shuffle-teams: host reshuffles all players into teams
+    // shuffle-teams: host reshuffles all players into teams (host-only)
     socket.on('shuffle-teams', ({ pin }) => {
       const game = games.get(pin);
       if (!game || !game.teamMode || game.state !== 'lobby') return;
+      if (!isHost(game, socket.id)) return;
       var allColors = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
       var teamColors = allColors.slice(0, game.teamCount);
       // Collect all player socket IDs and shuffle
@@ -160,10 +179,11 @@ function gameHandler(io) {
       });
     });
 
-    // show-teams: host broadcasts team roster to everyone
+    // show-teams: host broadcasts team roster to everyone (host-only)
     socket.on('show-teams', ({ pin }) => {
       const game = games.get(pin);
       if (!game || !game.teamMode) return;
+      if (!isHost(game, socket.id)) return;
       var allColors = ['red', 'blue', 'green', 'yellow', 'orange', 'pink', 'cyan', 'purple', 'lime', 'teal'];
       var teamColors = allColors.slice(0, game.teamCount);
       var roster = {};
@@ -176,12 +196,13 @@ function gameHandler(io) {
       io.to(pin).emit('team-roster', { roster: roster, teamNames: game.teamNames || {} });
     });
 
-    // start-game
+    // start-game (host-only)
     socket.on('start-game', ({ pin }) => {
       const game = games.get(pin);
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
       }
+      if (!isHost(game, socket.id)) return;
       // Prevent double-start: only allow from lobby state
       if (game.state !== 'lobby') {
         return;
@@ -212,12 +233,13 @@ function gameHandler(io) {
       }, 4000);
     });
 
-    // next-question: from leaderboard/halftime → next question
+    // next-question: from leaderboard/halftime → next question (host-only)
     socket.on('next-question', ({ pin }) => {
       const game = games.get(pin);
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
       }
+      if (!isHost(game, socket.id)) return;
       // Only allow advancing from leaderboard or halftime state
       if (game.state !== 'leaderboard' && game.state !== 'halftime') {
         return;
@@ -230,12 +252,13 @@ function gameHandler(io) {
       sendQuestion(io, game);
     });
 
-    // show-results: from review → show leaderboard or halftime (skip the 5s wait)
+    // show-results: from review → show leaderboard or halftime (host-only)
     socket.on('show-results', ({ pin }) => {
       const game = games.get(pin);
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
       }
+      if (!isHost(game, socket.id)) return;
       if (game.state !== 'answer_review') {
         return; // only valid during review
       }
@@ -247,8 +270,9 @@ function gameHandler(io) {
       showLeaderboardOrHalftime(io, game);
     });
 
-    // submit-answer
+    // submit-answer (rate limited: 5 per second)
     socket.on('submit-answer', ({ pin, questionId, optionId, timeRemaining }) => {
+      if (isRateLimited(socket.id, 5, 1000)) return;
       const game = games.get(pin);
       if (!game) {
         return socket.emit('error', { message: 'Game not found' });
@@ -339,8 +363,9 @@ function gameHandler(io) {
       }
     });
 
-    // reaction: player sends emoji reaction (fire and forget)
+    // reaction: player sends emoji reaction (rate limited: 3 per 2 seconds)
     socket.on('reaction', ({ pin, emoji }) => {
+      if (isRateLimited(socket.id, 3, 2000)) return;
       const game = games.get(pin);
       if (!game) return;
       const player = game.players.get(socket.id);
@@ -355,6 +380,7 @@ function gameHandler(io) {
     socket.on('disconnect', () => {
       const pin = socketToPin.get(socket.id);
       socketToPin.delete(socket.id);
+      socketRates.delete(socket.id);
       if (!pin) return;
 
       const game = games.get(pin);
@@ -599,7 +625,7 @@ function triggerTimeUp(io, game) {
         game.players.forEach(function (p) {
           if (p.team === team) {
             var ans = p.answers.find(function (a) { return a.questionIndex === game.currentQuestion; });
-            if (ans && ans.isCorrect) {
+            if (ans && ans.isCorrect && ans.teamBonus === undefined) {
               var bonus = Math.round(ans.scoreGained * 0.5);
               p.score += bonus;
               ans.teamBonus = bonus;
@@ -685,13 +711,17 @@ async function saveGameHistory(game, rankings) {
     );
     const sessionId = sessionResult.rows[0].id;
 
+    // Build nickname → player map for O(1) lookup
+    const nicknameMap = new Map();
+    game.players.forEach((p) => nicknameMap.set(p.nickname, p));
+
     // Batch insert game_players (all in one query)
     if (rankings.length > 0) {
       const playerValues = [];
       const playerParams = [];
       let paramIdx = 1;
       for (const r of rankings) {
-        const player = findPlayerByNickname(game, r.nickname);
+        const player = nicknameMap.get(r.nickname) || null;
         const totalCorrect = player ? player.answers.filter(a => a.isCorrect).length : 0;
         playerValues.push(`($${paramIdx}, $${paramIdx+1}, $${paramIdx+2}, $${paramIdx+3}, $${paramIdx+4}, $${paramIdx+5}, $${paramIdx+6}, $${paramIdx+7})`);
         playerParams.push(sessionId, r.nickname, r.avatar || '', player?.team || null,

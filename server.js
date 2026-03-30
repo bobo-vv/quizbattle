@@ -41,13 +41,16 @@ const sessionMiddleware = session({
     tableName: 'session',
     createTableIfMissing: true,
   }),
-  secret: process.env.SESSION_SECRET || 'zapquiz-secret-key',
+  secret: process.env.SESSION_SECRET || (process.env.NODE_ENV === 'production'
+    ? (() => { console.error('FATAL: SESSION_SECRET must be set in production'); process.exit(1); })()
+    : 'zapquiz-dev-secret-' + Date.now()),
   resave: false,
   saveUninitialized: false,
   cookie: {
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
   },
 });
 
@@ -61,6 +64,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Global error handler — prevent stack trace leaks
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 // NOTE: Session middleware removed from Socket.io to reduce DB load.
 // Players don't need HTTP sessions — they identify via pin + nickname over socket.

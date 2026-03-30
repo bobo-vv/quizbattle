@@ -250,7 +250,7 @@
       if (count > 0) {
         if (countdownNumEl) {
           countdownNumEl.textContent = count;
-          countdownNumEl.className = 'countdown-number countdown-number--pop';
+          countdownNumEl.className = 'countdown-number';
           void countdownNumEl.offsetWidth; // force reflow for animation
           countdownNumEl.className = 'countdown-number countdown-number--pop';
         }
