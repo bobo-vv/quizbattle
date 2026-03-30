@@ -65,6 +65,7 @@ router.post('/create', requireAuth, async (req, res) => {
       currentQuestion: -1,
       timer: null,
       maxPlayers: limits.maxPlayers,
+      createdAt: Date.now(),
       teamMode: teamMode || false,
       teamCount: (teamMode && teamCount >= 2 && teamCount <= 10) ? teamCount : 0,
       teamNames: {},  // { red: 'Custom Name', ... } set by captains
@@ -152,5 +153,18 @@ router.get('/:pin', (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Periodic cleanup: remove abandoned lobbies (2h) and finished games (5min)
+setInterval(() => {
+  const now = Date.now();
+  for (const [pin, game] of games) {
+    if (game.state === 'lobby' && game.createdAt && now - game.createdAt > 2 * 60 * 60 * 1000) {
+      games.delete(pin);
+    }
+    if (game.state === 'finished' && game.endedAt && now - game.endedAt > 5 * 60 * 1000) {
+      games.delete(pin);
+    }
+  }
+}, 5 * 60 * 1000); // Every 5 minutes
 
 module.exports = { router, games };

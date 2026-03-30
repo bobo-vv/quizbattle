@@ -87,6 +87,7 @@ body {
 }
 
 img { max-width: 100%; display: block; }
+img[hidden] { display: none; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; }
 
@@ -816,6 +817,9 @@ button { cursor: pointer; border: none; background: none; }
    ============================================================ */
 .host-page {
   overflow: hidden;
+  overflow-y: auto;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .host-state {
@@ -1010,6 +1014,7 @@ button { cursor: pointer; border: none; background: none; }
   position: relative;
   overflow: hidden;
 }
+.answer-block[hidden] { display: none; }
 .answer-block--red    { background: var(--answer-red); }
 .answer-block--blue   { background: var(--answer-blue); }
 .answer-block--yellow { background: var(--answer-yellow); }
@@ -1328,14 +1333,17 @@ button { cursor: pointer; border: none; background: none; }
    ============================================================ */
 .join-page {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow-y: auto;
+  min-height: 100dvh;
 }
 
 .join-container {
   width: 100%;
   max-width: 420px;
   padding: 2rem 1.5rem;
+  margin: auto 0;
 }
 
 .join-card {
@@ -1399,7 +1407,7 @@ button { cursor: pointer; border: none; background: none; }
 /* ============================================================
    10. Player Game States
    ============================================================ */
-.play-page { overflow: hidden; }
+.play-page { overflow: hidden; overflow-y: auto; height: 100vh; height: 100dvh; }
 
 .play-state {
   display: none;
@@ -1488,10 +1496,12 @@ button { cursor: pointer; border: none; background: none; }
   grid-template-columns: 1fr 1fr;
   gap: .75rem;
 }
+.play-answers[hidden] { display: none; }
 .play-answers--tf {
   grid-template-columns: 1fr 1fr;
 }
 
+.play-answer[hidden] { display: none; }
 .play-answer {
   display: flex;
   flex-direction: column;
@@ -1899,6 +1909,7 @@ button { cursor: pointer; border: none; background: none; }
   font-weight: 700;
   animation: slideDown .5s ease;
 }
+.welcome-banner[hidden] { display: none; }
 .welcome-banner__icon { font-size: 1.5rem; }
 .welcome-banner__text { flex: 1; }
 .welcome-banner__close {
@@ -1929,6 +1940,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 /* Admin nav badge */
+.admin-nav-badge[hidden] { display: none; }
 .admin-nav-badge {
   display: inline-flex;
   align-items: center;

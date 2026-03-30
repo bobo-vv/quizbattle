@@ -55,10 +55,11 @@ function gameHandler(io) {
         const oldPlayer = game.players.get(existingSocketId);
         game.players.delete(existingSocketId);
         socketToPin.delete(existingSocketId);
+        oldPlayer.disconnected = false;
         game.players.set(socket.id, oldPlayer);
       } else {
         // New player
-        if (game.state !== 'lobby') {
+        if (game.state !== 'lobby' && game.state !== 'countdown') {
           return socket.emit('error', { message: 'Game has already started' });
         }
         // Check player limit
@@ -282,7 +283,14 @@ function gameHandler(io) {
       if (isCorrect) {
         const basePoints = question.points;
         const timeLimit = question.time_limit;
-        const safeTimeRemaining = Math.max(0, Math.min(timeRemaining, timeLimit));
+        // Use server-side time calculation to prevent cheating
+        const serverElapsed = (Date.now() - (game.questionStartedAt || Date.now())) / 1000;
+        const serverTimeRemaining = Math.max(0, timeLimit - serverElapsed);
+        // Use the MINIMUM of client and server time (anti-cheat)
+        const safeTimeRemaining = Math.min(
+          Math.max(0, Math.min(timeRemaining, timeLimit)),
+          serverTimeRemaining
+        );
         const speedBonus = Math.round((safeTimeRemaining / timeLimit) * 500);
         scoreGained = basePoints + speedBonus;
         player.score += scoreGained;
@@ -310,16 +318,20 @@ function gameHandler(io) {
       game.answeredThisRound = (game.answeredThisRound || 0) + 1;
       const answeredCount = game.answeredThisRound;
 
+      // Count connected players only
+      let connectedPlayers = 0;
+      game.players.forEach((p) => { if (!p.disconnected) connectedPlayers++; });
+
       // Notify HOST only (not all 100 players) with answer count
       if (game.hostSocketId) {
         io.to(game.hostSocketId).emit('player-answered', {
           answeredCount,
-          totalPlayers: game.players.size,
+          totalPlayers: connectedPlayers,
         });
       }
 
-      // If all players answered, trigger time-up immediately
-      if (answeredCount >= game.players.size) {
+      // If all connected players answered, trigger time-up immediately
+      if (answeredCount >= connectedPlayers) {
         if (game.timer) {
           clearTimeout(game.timer);
         }
@@ -348,9 +360,50 @@ function gameHandler(io) {
       const game = games.get(pin);
       if (!game) return;
 
+      // Host disconnected
+      if (socket.id === game.hostSocketId) {
+        game.hostSocketId = null;
+      }
+
       if (game.players.has(socket.id)) {
         const player = game.players.get(socket.id);
-        game.players.delete(socket.id);
+
+        if (game.state === 'lobby') {
+          // In lobby: fully remove player
+          game.players.delete(socket.id);
+        } else {
+          // During game: mark as disconnected, keep data for reconnection
+          player.disconnected = true;
+          player.disconnectedSocketId = socket.id;
+
+          // Fix answeredThisRound counter if player answered this round
+          if (game.state === 'question' && game.answeredThisRound > 0) {
+            const answeredThisQ = player.answers.find(
+              a => a.questionIndex === game.currentQuestion
+            );
+            if (answeredThisQ) {
+              game.answeredThisRound--;
+            }
+          }
+
+          // Check if all remaining connected players have answered
+          if (game.state === 'question') {
+            let connectedCount = 0;
+            let answeredConnected = 0;
+            game.players.forEach((p) => {
+              if (!p.disconnected) {
+                connectedCount++;
+                if (p.answers.find(a => a.questionIndex === game.currentQuestion)) {
+                  answeredConnected++;
+                }
+              }
+            });
+            if (connectedCount > 0 && answeredConnected >= connectedCount) {
+              if (game.timer) clearTimeout(game.timer);
+              triggerTimeUp(io, game);
+            }
+          }
+        }
 
         // Debounce player-left broadcast
         debouncedPlayerBroadcast(io, game, pin);
@@ -378,7 +431,9 @@ function debouncedPlayerBroadcast(io, game, pin) {
 function getPlayersList(game) {
   const players = [];
   game.players.forEach((player) => {
-    players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score, team: player.team || null, isCaptain: player.isCaptain || false });
+    if (!player.disconnected) {
+      players.push({ nickname: player.nickname, avatar: player.avatar || '', score: player.score, team: player.team || null, isCaptain: player.isCaptain || false });
+    }
   });
   return players;
 }
@@ -440,6 +495,8 @@ function sendQuestion(io, game) {
     const teamRankings = getTeamRankings(game);
     io.to(game.pin).emit('game-ended', { rankings, teamRankings });
 
+    game.endedAt = Date.now();
+
     // Save game history to database
     saveGameHistory(game, rankings).catch(err => {
       console.error('Failed to save game history:', err);
@@ -450,10 +507,24 @@ function sendQuestion(io, game) {
       clearTimeout(game.timer);
       game.timer = null;
     }
+
+    // Clean up game after 60s grace period (let clients receive game-ended)
+    setTimeout(() => {
+      games.delete(game.pin);
+      if (joinBroadcastTimers.has(game.pin)) {
+        clearTimeout(joinBroadcastTimers.get(game.pin));
+        joinBroadcastTimers.delete(game.pin);
+      }
+      // Clean up socketToPin entries
+      game.players.forEach((_, sid) => socketToPin.delete(sid));
+      if (game.hostSocketId) socketToPin.delete(game.hostSocketId);
+    }, 60000);
+
     return;
   }
 
   game.state = 'question';
+  game.questionStartedAt = Date.now();
 
   const question = game.quiz.questions[game.currentQuestion];
 
